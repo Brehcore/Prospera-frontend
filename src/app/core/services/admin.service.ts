@@ -21,6 +21,22 @@ export class AdminService {
     return this.api.get<unknown>('/admin/sectors').pipe(map(response => this.unwrapList<AdminSector>(response).map(this.normalizeSector)));
   }
 
+  /**
+   * Carrega setores do catálogo público (endpoint público)
+   * GET /public/catalog/sectors
+   */
+  getCatalogSectors(): Observable<any[]> {
+    return this.api.get<unknown>('/public/catalog/sectors').pipe(
+      map(response => {
+        // Se a resposta for um array direto, retornar; caso contrário, extrair a lista
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return this.unwrapList<any>(response);
+      })
+    );
+  }
+
   // --- Organizations (Admin) ---
   getOrganizations(): Observable<any[]> {
     return this.api.get<unknown>('/admin/organizations').pipe(
@@ -180,6 +196,32 @@ export class AdminService {
       .pipe(map(() => void 0));
   }
 
+  /**
+   * Adiciona um setor à organização (adotar setor do catálogo global)
+   * POST /organizations/{orgId}/sectors
+   */
+  addSectorToOrganization(orgId: string, sectorId: string): Observable<void> {
+    if (!orgId || !sectorId) return of(void 0);
+    return this.api
+      .post<void>(`/organizations/${encodeURIComponent(orgId)}/sectors`, { sectorId })
+      .pipe(map(() => void 0));
+  }
+
+  /**
+   * Lista todos os setores atualmente adotados pela organização
+   * GET /organizations/{orgId}/sectors
+   */
+  getOrganizationSectors(orgId: string): Observable<any[]> {
+    return this.api.get<unknown>(`/organizations/${encodeURIComponent(orgId)}/sectors`).pipe(
+      map(response => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return this.unwrapList<any>(response);
+      })
+    );
+  }
+
   // --- Organization members / enrollments ---
   /**
    * Lista membros matriculados em um treinamento específico dentro de uma organização.
@@ -192,12 +234,32 @@ export class AdminService {
   }
 
   /**
+   * Matricula em massa membros da organização em um treinamento.
+   * POST /organizations/{orgId}/enrollments
+   */
+  enrollMembersInTraining(orgId: string, payload: { trainingId: string; userIds: string[] }): Observable<void> {
+    if (!orgId || !payload || !payload.trainingId || !Array.isArray(payload.userIds) || payload.userIds.length === 0) return of(void 0);
+    const path = `/organizations/${encodeURIComponent(orgId)}/enrollments`;
+    return this.api.post<void>(path, payload).pipe(map(() => void 0));
+  }
+
+  /**
    * Lista membros da organização (endpoint alternativo mais genérico).
    * GET /organizations/{orgId}/members
    */
   getOrganizationMembers(orgId: string): Observable<any[]> {
     if (!orgId) return of([]);
     return this.api.get<unknown>(`/organizations/${encodeURIComponent(orgId)}/members`).pipe(map(resp => this.unwrapList<any>(resp)));
+  }
+
+  /**
+   * Lista os treinamentos do catálogo que podem ser atribuídos/contratados para a organização.
+   * GET /organizations/{orgId}/assignable-trainings
+   */
+  getAssignableTrainingsForOrg(orgId: string): Observable<any[]> {
+    if (!orgId) return of([]);
+    const path = `/organizations/${encodeURIComponent(orgId)}/assignable-trainings`;
+    return this.api.get<unknown>(path).pipe(map(resp => this.unwrapList<any>(resp)));
   }
 
   /**
@@ -241,6 +303,15 @@ export class AdminService {
   updateOrganizationMemberRole(orgId: string, membershipId: string, payload: any): Observable<any> {
     const body = { ...(payload || {}) };
     return this.api.patch<any>(`/organizations/${encodeURIComponent(orgId)}/members/${encodeURIComponent(membershipId)}`, body);
+  }
+
+  /**
+   * Busca detalhes completos de um membro na organização
+   * GET /organizations/{organizationId}/members/{membershipId}
+   */
+  getMemberDetails(orgId: string, membershipId: string): Observable<any> {
+    if (!orgId || !membershipId) return of(null);
+    return this.api.get<unknown>(`/organizations/${encodeURIComponent(orgId)}/members/${encodeURIComponent(membershipId)}`).pipe(map(resp => resp as any));
   }
 
   /**

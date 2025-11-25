@@ -90,13 +90,14 @@
               <h4>Associações (Memberships)</h4>
               <table class="table mini" aria-label="Associações do usuário">
                 <thead>
-                  <tr><th>Org</th><th>Nome</th><th>Perfil</th></tr>
+                  <tr><th>Org</th><th>Nome</th><th>Perfil</th><th>Membership</th></tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let m of d.memberships">
                     <td data-label="Org ID" class="mono">{{m.organizationId}}</td>
                     <td data-label="Nome">{{m.organizationName}}</td>
                     <td data-label="Perfil">{{m.role}}</td>
+                    <td data-label="Membership" class="mono">{{m.membershipId}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -190,6 +191,7 @@
                 </tbody>
               </table>
             </div>
+
           </div>
         </div>
       </div>

@@ -394,17 +394,26 @@
             <div *ngIf="orgMembersLoading">Carregando membros…</div>
             <table *ngIf="!orgMembersLoading && orgMembers.length">
               <thead>
-                <tr><th>Nome</th><th>E-mail</th><th>Role</th><th>Ações</th></tr>
+                <tr><th>Nome</th><th>Role</th><th>Ações</th></tr>
               </thead>
               <tbody>
                 <tr *ngFor="let m of orgMembers" (click)="openMemberMenuId = null">
                   <td>{{ m.fullName || '—' }}</td>
-                  <td>{{ m.userEmail || '—' }}</td>
-                    <td>{{ m.role === 'ORG_ADMIN' ? 'Administrador' : 'Membro' }}</td>
+                  <td>{{ m.role === 'ORG_ADMIN' ? 'Administrador' : 'Membro' }}</td>
                   <td class="actions-cell">
                     <div class="action-menu-wrapper">
                                   <button class="btn btn-icon" (click)="toggleMemberMenu(m.membershipId, $event)" aria-haspopup="true" [attr.aria-expanded]="openMemberMenuId === m.membershipId ? 'true' : 'false'">⋯</button>
                                   <div class="action-menu" *ngIf="openMemberMenuId === m.membershipId" (click)="$event.stopPropagation()" role="menu" aria-label="Ações do membro">
+                                    <div class="action-item" role="menuitem" (click)="viewMemberDetails(m.membershipId); $event.stopPropagation()">
+                                      <span class="icon" aria-hidden>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                          <circle cx="12" cy="12" r="1" />
+                                          <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                                          <path d="M12 7v5l3 2" />
+                                        </svg>
+                                      </span>
+                                      <span class="action-text">Ver detalhes</span>
+                                    </div>
                                     <div class="action-item" role="menuitem" (click)="toggleMemberRole(m.membershipId, m.role); $event.stopPropagation()">
                                       <span class="icon" aria-hidden>
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
@@ -487,6 +496,40 @@
               <!-- import/report actions removidas -->
             </div>
           </div>
+
+          <!-- Seção de Setores para ORG_ADMIN -->
+          <div class="org-sectors" *ngIf="isOrgAdmin()">
+            <h4>Setores da Organização</h4>
+            <div class="sector-adoption">
+              <p class="small">Selecione setores do catálogo para sua organização:</p>
+              <div class="sector-input-group">
+                <select [(ngModel)]="selectedSectorId" class="sector-select" aria-label="Selecione um setor">
+                  <option value="">-- Selecione um setor --</option>
+                  <option *ngFor="let s of availableSectors" [value]="s.id">{{s.name}}</option>
+                </select>
+                <button type="button" class="btn btn-primary" 
+                        (click)="adoptSector()" 
+                        [disabled]="sectorsLoading || !selectedSectorId">
+                  {{ sectorsLoading ? 'Adicionando…' : 'Adicionar Setor' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Setores já adotados -->
+            <div *ngIf="organizationSectors && organizationSectors.length" class="sectors-list">
+              <h5>Setores adotados:</h5>
+              <ul>
+                <li *ngFor="let s of organizationSectors" class="sector-badge">{{s.name || s}}</li>
+              </ul>
+            </div>
+            <div *ngIf="!organizationSectors || organizationSectors.length === 0" class="empty-sectors">
+              Nenhum setor adotado ainda.
+            </div>
+
+            <!-- Mensagens de erro/sucesso -->
+            <div *ngIf="sectorError" class="error-message">{{ sectorError }}</div>
+            <div *ngIf="sectorSuccessMessage" class="success-message">{{ sectorSuccessMessage }}</div>
+          </div>
         </div>
   <!-- título removido: redundante com a listagem de organizações -->
 
@@ -498,6 +541,60 @@
     </div>
   </article>
 </ng-template>
+
+<!-- Member Details Modal -->
+<div *ngIf="viewingDetailsFor" class="modal-backdrop" (click)="closeMemberDetails()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalhes do membro</h3>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="memberDetailsLoading" class="loading">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Carregando detalhes…</p>
+      </div>
+      <div *ngIf="memberDetailsError" class="error">{{ memberDetailsError }}</div>
+      <div *ngIf="!memberDetailsLoading && memberDetails" class="member-details-grid">
+        <dl>
+          <div>
+            <dt>Nome completo</dt>
+            <dd>{{ memberDetails.fullName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>E-mail</dt>
+            <dd>{{ memberDetails.userEmail || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Role</dt>
+            <dd>{{ memberDetails.role === 'ORG_ADMIN' ? 'Administrador' : 'Membro' }}</dd>
+          </div>
+          <div *ngIf="memberDetails.addedByAdminEmail">
+            <dt>Adicionado por</dt>
+            <dd>{{ memberDetails.addedByAdminEmail }}</dd>
+          </div>
+          <div *ngIf="memberDetails.joinedAt">
+            <dt>Membro desde</dt>
+            <dd>{{ memberDetails.joinedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div *ngIf="memberDetails.assignedSectors">
+            <dt>Setores atribuídos</dt>
+            <dd>
+              <span *ngIf="memberDetails.assignedSectors?.length; else noSectors">
+                {{ formatAssignedSectors(memberDetails.assignedSectors) }}
+              </span>
+              <ng-template #noSectors>
+                <span>Nenhum setor atribuído</span>
+              </ng-template>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" (click)="closeMemberDetails()">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Member Progress Modal -->
 <div *ngIf="viewingProgressFor" class="modal-backdrop" (click)="closeMemberProgress()">

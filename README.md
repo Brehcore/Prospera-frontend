@@ -49,7 +49,7 @@ npm run build -- --configuration production
 Você pode visualizar o projeto em tempo real através do link abaixo.
 Todas as atualizações feitas no repositório são refletidas automaticamente no deploy:
 
-🔗 prospera-treinamento.vercel.app
+🔗 Prospera-frontend.vercel.app
 
 ---
 

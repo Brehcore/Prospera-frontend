@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { take, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -36,7 +36,7 @@ interface CompanySubuser {
 @Component({
   selector: 'pros-account',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AdminTrainingCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, AdminTrainingCardComponent],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss']
 })
@@ -120,6 +120,18 @@ export class AccountComponent implements OnInit {
   memberProgressList: any[] = [];
   memberProgressLoading = false;
   memberProgressError = '';
+  // member details modal state
+  viewingDetailsFor: string | null = null; // membershipId
+  memberDetails: any | null = null;
+  memberDetailsLoading = false;
+  memberDetailsError = '';
+  // Organization sectors adoption (ORG_ADMIN only)
+  availableSectors: Array<{ id: string; name: string }> = [];
+  organizationSectors: Array<any> = [];
+  selectedSectorId = '';
+  sectorsLoading = false;
+  sectorError = '';
+  sectorSuccessMessage = '';
   // Organizations
   organizations: Array<{ id: string; name: string; cnpj?: string }> = [];
   orgsLoading = false;
@@ -344,6 +356,8 @@ export class AccountComponent implements OnInit {
           } else {
             this.orgMembers = [];
           }
+          // Carregar setores do catálogo e setores adotados pela org após carregar membros
+          try { this.loadSectors(orgId); } catch (e) { console.warn('[Account] loadSectors falhou', e); }
         },
         error: err => {
           this.orgMembersLoading = false;
@@ -588,12 +602,70 @@ export class AccountComponent implements OnInit {
         } else {
           this.orgMembers = [];
         }
+        // Carregar setores disponíveis e da organização (para ORG_ADMIN)
+        this.loadSectors(orgId);
       },
       error: err => {
         console.warn('[Account] falha ao carregar membros da org', err);
         this.orgMembersLoading = false;
         this.orgMembersError = 'Não foi possível carregar os membros da organização.';
         this.populateCompanySubusers(this.user!);
+      }
+    });
+  }
+
+  /**
+   * Carrega setores disponíveis e setores já adotados pela organização
+   */
+  private loadSectors(orgId: string): void {
+    // Carregar lista de setores disponíveis do catálogo público (GET /public/catalog/sectors)
+    this.adminService.getCatalogSectors().subscribe({
+      next: (response: any) => {
+        console.log('[Account] Resposta bruta do catálogo:', response);
+        
+        // Tentar extrair array de diferentes formatos possíveis
+        let sectors: any[] = [];
+        if (Array.isArray(response)) {
+          sectors = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+          sectors = response.data;
+        } else if (response?.sectors && Array.isArray(response.sectors)) {
+          sectors = response.sectors;
+        } else if (response?.content && Array.isArray(response.content)) {
+          sectors = response.content;
+        }
+        
+        console.log('[Account] Setores processados:', sectors);
+        this.availableSectors = sectors;
+      },
+      error: (err) => {
+        console.error('[Account] Erro ao carregar setores do catálogo:', err);
+        this.availableSectors = [];
+      }
+    });
+
+    // Carregar setores já adotados pela organização (GET /organizations/{orgId}/sectors)
+    this.adminService.getOrganizationSectors(orgId).subscribe({
+      next: (response: any) => {
+        console.log('[Account] Resposta bruta de setores da org:', response);
+        
+        let sectors: any[] = [];
+        if (Array.isArray(response)) {
+          sectors = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+          sectors = response.data;
+        } else if (response?.sectors && Array.isArray(response.sectors)) {
+          sectors = response.sectors;
+        } else if (response?.content && Array.isArray(response.content)) {
+          sectors = response.content;
+        }
+        
+        console.log('[Account] Setores da org processados:', sectors);
+        this.organizationSectors = sectors;
+      },
+      error: (err) => {
+        console.error('[Account] Erro ao carregar setores da organização:', err);
+        this.organizationSectors = [];
       }
     });
   }
@@ -729,6 +801,81 @@ export class AccountComponent implements OnInit {
     this.viewingProgressFor = null;
     this.memberProgressList = [];
     this.memberProgressError = '';
+  }
+
+  viewMemberDetails(membershipId: string) {
+    const orgIdCandidate = this.selectedOrgId || String(((this.user?.company as any)?.['id']) ?? ((this.user?.organizations as any)?.[0]?.['id']) ?? '');
+    const orgId = String(orgIdCandidate || '');
+    console.debug('[Account] viewMemberDetails called', { orgId, membershipId });
+    if (!orgId || !membershipId) {
+      console.warn('[Account] missing orgId or membershipId for viewMemberDetails', { orgId, membershipId });
+      return;
+    }
+    this.viewingDetailsFor = membershipId;
+    this.memberDetails = null;
+    this.memberDetailsLoading = true;
+    this.memberDetailsError = '';
+    this.adminService.getMemberDetails(orgId, membershipId).subscribe({
+      next: data => {
+        console.debug('[Account] getMemberDetails response', data);
+        this.memberDetailsLoading = false;
+        this.memberDetails = data || {};
+      },
+      error: err => {
+        console.error('[Account] getMemberDetails error', err);
+        this.memberDetailsLoading = false;
+        this.memberDetailsError = err?.message ?? 'Falha ao buscar detalhes do membro.';
+      }
+    });
+  }
+
+  closeMemberDetails() {
+    this.viewingDetailsFor = null;
+    this.memberDetails = null;
+    this.memberDetailsError = '';
+  }
+
+  formatAssignedSectors(sectors: any[]): string {
+    if (!Array.isArray(sectors)) return 'Nenhum setor atribuído';
+    if (sectors.length === 0) return 'Nenhum setor atribuído';
+    return sectors.map((s: any) => (typeof s === 'object' ? s.name || s.title || 'Setor' : String(s))).join(', ');
+  }
+
+  /**
+   * Adota um setor da organização global (POST /organizations/{orgId}/sectors)
+   */
+  adoptSector(): void {
+    if (!this.selectedOrgId || !this.selectedSectorId) return;
+    
+    this.sectorsLoading = true;
+    this.sectorError = '';
+    this.sectorSuccessMessage = '';
+    
+    this.adminService.addSectorToOrganization(this.selectedOrgId, this.selectedSectorId).subscribe({
+      next: () => {
+        this.sectorSuccessMessage = 'Setor adotado com sucesso!';
+        this.selectedSectorId = '';
+        // Recarregar organização para refletir novo setor
+        this.loadOrganizationMembers();
+        setTimeout(() => { this.sectorSuccessMessage = ''; }, 3000);
+      },
+      error: (err) => {
+        this.sectorError = err?.message || 'Falha ao adotar o setor. Tente novamente.';
+        this.sectorsLoading = false;
+      },
+      complete: () => {
+        this.sectorsLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Verifica se o usuário é ORG_ADMIN na organização selecionada
+   */
+  isOrgAdmin(): boolean {
+    if (!this.user) return false;
+    // Usa AuthService para verificar se é ORG_ADMIN
+    return this.authService.isOrgAdmin();
   }
 
   displayStatus(raw?: string): string {

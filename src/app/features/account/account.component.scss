@@ -538,6 +538,27 @@
 .org-actions { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: var(--spacing-md); }
 .org-actions .invite-form { display: grid; grid-template-columns: 1fr auto; gap: var(--spacing-sm); align-items: center; }
 
+/* Seção de Setores para ORG_ADMIN */
+.org-sectors { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid rgba(31,42,55,0.06); }
+.org-sectors h4 { margin: 0 0 var(--spacing-sm) 0; font-size: 1rem; font-weight: 600; color: var(--text, #222); }
+.org-sectors .small { display: block; margin-bottom: 10px; font-size: 0.9rem; color: var(--gray-medium, #666); }
+
+.sector-adoption { display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--spacing-md); }
+.sector-input-group { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.sector-select { padding: 8px 10px; border: 1px solid rgba(31,42,55,0.08); border-radius: 6px; font-size: 0.95rem; background: var(--white); }
+.sector-select:focus { outline: none; border-color: var(--verde-escuro); box-shadow: 0 0 0 2px rgba(34,139,34,0.1); }
+
+.sectors-list { margin-top: 15px; }
+.sectors-list h5 { margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 600; color: var(--text, #222); }
+.sectors-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.sector-badge { background: linear-gradient(135deg,rgba(34,139,34,0.1),rgba(34,139,34,0.05)); border: 1px solid rgba(34,139,34,0.3); border-radius: 20px; padding: 6px 12px; font-size: 0.9rem; color: var(--verde-escuro); }
+
+.empty-sectors { font-size: 0.9rem; color: var(--gray-medium, #999); font-style: italic; margin-top: 10px; }
+
+.error-message { margin-top: 10px; padding: 10px; background: rgba(178,34,34,0.08); border-left: 3px solid #b71c1c; border-radius: 4px; color: #b71c1c; font-size: 0.9rem; }
+.success-message { margin-top: 10px; padding: 10px; background: rgba(34,139,34,0.08); border-left: 3px solid #228B22; border-radius: 4px; color: #228B22; font-size: 0.9rem; }
+
 .btn { padding: 0.5rem 0.9rem; border-radius: 8px; border: none; cursor: pointer; }
 .btn-primary { background: linear-gradient(135deg,var(--verde-escuro),var(--verde-claro)); color: #fff; }
 .btn-secondary { background: transparent; border: 1px solid rgba(31,42,55,0.08); color: var(--gray-dark, #1f2a37); }
@@ -802,9 +823,35 @@
 .progress-fill { height: 100%; background: linear-gradient(90deg,var(--verde-escuro),var(--verde-claro)); width: 0%; transition: width .4s ease; }
 .progress-percent { font-weight: 700; font-size: 0.95rem; margin-top: 4px; }
 
-@media (max-width: 640px) {
-  .progress-item { flex-direction: row; align-items: flex-start; }
-  .progress-cover { width: 56px; height: 80px; }
+/* Member details modal styles */
+.member-details-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.member-details-grid dl {
+  display: grid;
+  gap: 1rem;
+}
+
+.member-details-grid dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.member-details-grid dt {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--gray-medium);
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.member-details-grid dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--gray-darker, #1f2a37);
 }
 
 /* Modal styling for organization creation */

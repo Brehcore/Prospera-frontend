@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Prospera-Treinamento": {
+    "Prospera-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/Prospera-Treinamento",
+            "outputPath": "dist/Prospera-frontend",
             "browser": "src/main.ts",
             "polyfills": [
               "zone.js"
@@ -81,10 +81,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Prospera-Treinamento:build:production"
+              "buildTarget": "Prospera-frontend:build:production"
             },
             "development": {
-              "buildTarget": "Prospera-Treinamento:build:development"
+              "buildTarget": "Prospera-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
