@@ -31,6 +31,12 @@ export const routes: Routes = [
 		canActivate: [authGuard]
 	},
 	{
+		path: 'trainings',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/trainings/trainings.component').then(m => m.TrainingsComponent),
+		data: { title: 'Treinamentos' }
+	},
+	{
 		path: 'conta/assinatura',
 		canActivate: [authGuard],
 		loadComponent: () => import('./features/account/subscription-view.component').then(m => m.SubscriptionViewComponent),

@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SubscriptionService, UserSubscription, AccessStatus } from '../../core/services/subscription.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '../../core/services/training.service';
 
 @Component({
   selector: 'pros-subscription-view',
@@ -45,11 +46,11 @@ import { AuthService } from '../../core/services/auth.service';
         <dl class="meta">
           <div *ngIf="sub.startedAt">
             <dt>Início</dt>
-            <dd>{{ sub.startedAt | date:'shortDate' }}</dd>
+            <dd>{{ sub.startedAt | date:'dd/MM/yyyy' }}</dd>
           </div>
           <div *ngIf="sub.expiresAt">
             <dt>Expira em</dt>
-            <dd>{{ sub.expiresAt | date:'shortDate' }}</dd>
+            <dd>{{ sub.expiresAt | date:'dd/MM/yyyy' }}</dd>
           </div>
           <div *ngIf="sub.durationInDays">
             <dt>Duração</dt>
@@ -59,6 +60,62 @@ import { AuthService } from '../../core/services/auth.service';
         <div class="pricing" *ngIf="sub.currentPrice">
           <span class="old" *ngIf="showDiscount(sub)">{{ sub.originalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
           <span class="current">{{ sub.currentPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- My Enrollments Section (outside trainingsLoading check) -->
+      <div class="container">
+        <section class="my-enrollments" *ngIf="(myEnrollments() || []).length > 0">
+          <h3>Cursos & Treinamentos</h3>
+          <p class="section-subtitle">Acompanhe sua jornada de aprendizado</p>
+          <div class="training-grid">
+            <article class="training-card enrollment-card" *ngFor="let e of (myEnrollments() || []); trackBy: trackByEnrollmentId">
+              <div class="card-cover" *ngIf="e.coverImageUrl" [style.backgroundImage]="'url(' + e.coverImageUrl + ')'"></div>
+              <div class="card-content">
+                <h4>{{ e.trainingTitle }}</h4>
+                <div class="enrollment-info">
+                  <p class="muted">Matriculado em {{ e.enrolledAt | date:'dd/MM/yyyy' }}</p>
+                </div>
+                <div class="progress-container" *ngIf="e.progressPercentage !== undefined && e.progressPercentage !== null">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="e.progressPercentage"></div>
+                  </div>
+                  <span class="progress-text">{{ e.progressPercentage | number:'1.0-0' }}% completo</span>
+                </div>
+                <div class="enrollment-status" [attr.data-status]="e.status">
+                  {{ e.status === 'ACTIVE' ? 'Em Progresso' : e.status }}
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <!-- Trainings catalog for authenticated user -->
+      <div class="container" *ngIf="!trainingsLoading()">
+
+        <section class="trainings" *ngIf="trainings()?.length">
+          <h3>Catálogo de Treinamentos</h3>
+          <div class="training-grid">
+            <article class="training-card" *ngFor="let t of (trainings() || []); trackBy: trackByTrainingId">
+              <h4>{{ t.title }}</h4>
+              <p class="muted" *ngIf="t.description">{{ t.description }}</p>
+              <div class="training-actions">
+                <button class="btn btn-primary" (click)="enrollInTraining(t.id)" [disabled]="isEnrolled(t.id)">
+                  {{ isEnrolled(t.id) ? 'Matriculado' : 'Matricular' }}
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="empty" *ngIf="(trainings() || []).length === 0">
+          <p>Nenhum treinamento disponível no catálogo.</p>
+        </div>
+
+        <div class="error" *ngIf="trainingsError()">
+          <p>{{ trainingsError() }}</p>
+          <button class="btn btn-secondary" (click)="loadMyCatalog()">Recarregar catálogo</button>
         </div>
       </div>
     </div>
@@ -83,12 +140,41 @@ import { AuthService } from '../../core/services/auth.service';
   .pricing { display:flex; align-items:baseline; gap:.75rem; font-weight:600; }
   .pricing .old { text-decoration:line-through; color:#888; font-weight:400; }
   .pricing .current { font-size:1.5rem; color:var(--color-primary-600,#5a4bcf); }
+  .section-subtitle { margin:-0.75rem 0 1.5rem; color:var(--color-text-muted,#5b5f63); font-size:.95rem; }
+  .training-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem; }
+  .training-card { background:#fff; border:1px solid rgba(91,95,99,.12); border-radius:12px; padding:1.5rem; transition:box-shadow .3s ease; }
+  .training-card:hover { box-shadow:0 8px 24px rgba(31,36,43,.12); }
+  .training-card h4 { margin:0 0 0.75rem; font-size:1.1rem; }
+  .training-card .muted { margin:0.5rem 0; color:var(--color-text-muted,#5b5f63); font-size:.9rem; }
+  .training-actions { display:flex; gap:0.75rem; margin-top:1rem; }
+  .training-card .btn { flex:1; }
+  .enrollment-card { display:flex; flex-direction:column; overflow:hidden; padding:0; }
+  .card-cover { width:100%; height:150px; background-size:cover; background-position:center; }
+  .card-content { padding:1.5rem; flex:1; display:flex; flex-direction:column; }
+  .card-content h4 { margin:0 0 0.75rem; font-size:1.1rem; }
+  .enrollment-info { margin:0.75rem 0; }
+  .progress-container { margin:1rem 0; }
+  .progress-bar { width:100%; height:6px; background:rgba(91,95,99,.15); border-radius:3px; overflow:hidden; margin-bottom:0.5rem; }
+  .progress-fill { height:100%; background:linear-gradient(90deg, var(--verde-escuro), var(--verde-claro)); transition:width .3s ease; }
+  .progress-text { font-size:.8rem; color:var(--color-text-muted,#5b5f63); }
+  .enrollment-status { font-size:.75rem; letter-spacing:.02em; text-transform:uppercase; font-weight:600; padding:.4rem .7rem; border-radius:999px; background:rgba(91,95,99,.15); display:inline-block; margin-top:auto; width:fit-content; }
+  .enrollment-status[data-status="ACTIVE"], .enrollment-status[data-status="ATIVA"] { background:rgba(46,182,125,.18); color:#11805a; }
+  .enrollment-status[data-status="COMPLETED"], .enrollment-status[data-status="CONCLUÍDO"] { background:rgba(79,168,108,.15); color:var(--verde-escuro); }
   @keyframes spin { to { transform: rotate(360deg);} }
   `]
 })
 export class SubscriptionViewComponent implements OnInit {
   private readonly service = inject(SubscriptionService);
   private readonly authService = inject(AuthService);
+  private readonly trainingService = inject(TrainingService);
+
+  // Trainings state
+  readonly trainings = signal<TrainingCatalogItemDTO[] | null>(null);
+  readonly trainingsLoading = computed(() => this.trainings() === null);
+  readonly trainingsError = signal<string | null>(null);
+
+  // Enrollments
+  readonly myEnrollments = signal<EnrollmentResponseDTO[] | null>(null);
 
   readonly subscription = signal<UserSubscription | null | undefined>(undefined); // undefined=loading, null=sem assinatura
   readonly loading = computed(() => this.subscription() === undefined);
@@ -103,6 +189,9 @@ export class SubscriptionViewComponent implements OnInit {
       try { console.debug('[SubscriptionView] storage', { hasToken: !!localStorage.getItem('jwtToken') || !!localStorage.getItem('jwttoken'), storedRole: localStorage.getItem('systemRole'), email: localStorage.getItem('loggedInUserEmail') }); } catch (e) {}
     } catch (e) {}
     this.load();
+    // load trainings/catalog for authenticated user
+    this.loadMyCatalog();
+    this.loadMyEnrollments();
   }
 
   reload() { this.load(true); }
@@ -164,6 +253,70 @@ export class SubscriptionViewComponent implements OnInit {
         this.subscription.set(null);
       }
     });
+  }
+
+  // Training related methods
+  loadMyCatalog() {
+    this.trainings.set(null); // loading
+    this.trainingsError.set(null);
+    this.trainingService.getMyCatalog().subscribe({
+      next: (items: TrainingCatalogItemDTO[]) => {
+        this.trainings.set(items || []);
+      },
+      error: err => {
+        console.warn('[SubscriptionView] erro ao carregar catálogo de treinamentos', err);
+        this.trainings.set([]);
+        this.trainingsError.set('Não foi possível carregar o catálogo de treinamentos.');
+      }
+    });
+  }
+
+  enrollInTraining(trainingId: string) {
+    this.trainingService.enrollInTraining(trainingId).subscribe({
+      next: (resp) => {
+        // Atualiza lista de matrículas locais
+        const current = this.myEnrollments() ?? [];
+        this.myEnrollments.set([...(current || []), resp]);
+        console.debug('[SubscriptionView] matriculado', resp);
+      },
+      error: (err) => {
+        console.warn('[SubscriptionView] erro ao matricular', err);
+      }
+    });
+  }
+
+  markLessonComplete(lessonId: string) {
+    this.trainingService.markLessonAsCompleted(lessonId).subscribe({
+      next: () => console.debug('[SubscriptionView] lição marcada como concluída', lessonId),
+      error: err => console.warn('[SubscriptionView] erro ao marcar lição concluída', err)
+    });
+  }
+
+  loadMyEnrollments() {
+    this.myEnrollments.set(null);
+    this.trainingService.getMyEnrollments().subscribe({
+      next: items => {
+        console.debug('[SubscriptionView] minhas matrículas carregadas:', items);
+        this.myEnrollments.set(items || []);
+      },
+      error: err => {
+        console.warn('[SubscriptionView] erro ao carregar minhas matrículas', err);
+        this.myEnrollments.set([]);
+      }
+    });
+  }
+
+  trackByTrainingId(_: number, item: TrainingCatalogItemDTO) {
+    return item?.id;
+  }
+
+  trackByEnrollmentId(_: number, item: EnrollmentResponseDTO) {
+    return item?.id;
+  }
+
+  isEnrolled(trainingId: string) {
+    const enrolls = this.myEnrollments() ?? [];
+    return enrolls.some(e => e.trainingId === trainingId);
   }
 
   showDiscount(sub: UserSubscription) {

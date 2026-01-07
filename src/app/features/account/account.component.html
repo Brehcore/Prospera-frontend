@@ -240,11 +240,11 @@
                 <dl>
                   <div *ngIf="sub.startedAt">
                     <dt>Início</dt>
-                    <dd>{{ sub.startedAt | date:'shortDate' }}</dd>
+                    <dd>{{ sub.startedAt | date:'dd/MM/yyyy' }}</dd>
                   </div>
                   <div *ngIf="sub.expiresAt">
                     <dt>Fim</dt>
-                    <dd>{{ sub.expiresAt | date:'shortDate' }}</dd>
+                    <dd>{{ sub.expiresAt | date:'dd/MM/yyyy' }}</dd>
                   </div>
                   <div *ngIf="sub.origin">
                     <dt>Origem</dt>
@@ -308,18 +308,8 @@
               </div>
             </div>
             <ng-template #normalLearning>
-              <article class="learning-card">
-                <h2>Biblioteca Prospera</h2>
-                <p>Acesse todos os cursos disponíveis para o seu plano, organize trilhas e acompanhe certificados.</p>
-                <button type="button" class="btn btn-primary" (click)="openLearningCatalog()">Ir para a biblioteca</button>
-              </article>
-              <article class="learning-card">
-                <h2>Organizações vinculadas</h2>
-                <ul>
-                  <li *ngFor="let org of user?.organizations || []">{{ org['organizationName'] || org['name'] }} — {{ org['position'] || 'Membro' }}</li>
-                </ul>
-                <p *ngIf="!(user?.organizations?.length)">Você ainda não está vinculado a nenhuma organização. Entre em contato com um administrador.</p>
-              </article>
+              <!-- Embed personalized trainings component for authenticated users -->
+              <pros-trainings></pros-trainings>
             </ng-template>
           </div>
         </section>
@@ -383,7 +373,7 @@
         </div>
         <div *ngIf="!orgsLoading && organizations.length === 0" class="empty">Nenhuma organização encontrada.</div>
 
-        <div *ngIf="selectedOrgId" class="org-detail card">
+        <div *ngIf="selectedOrgId && isOrgAdmin()" class="org-detail card">
           <header>
             <h3>Organização selecionada</h3>
             <p *ngIf="organizations.length">{{ selectedOrgName }}</p>
@@ -472,13 +462,13 @@
               </div>
             </div>
 
-              <div class="org-actions">
+              <div class="org-actions" *ngIf="isOrgAdmin()">
               <form class="invite-form invite-row" [formGroup]="inviteForm" (ngSubmit)="inviteSubuser()">
                 <label class="invite-email">
                   <span class="sr-only">Adicionar membro por e-mail</span>
                   <input type="email" formControlName="email" placeholder="colaborador@empresa.com" />
                 </label>
-                <label class="invite-role">
+                <label class="invite-role" *ngIf="isOrgAdmin()">
                   <span class="sr-only">Role</span>
                   <select formControlName="role" aria-label="Role do membro">
                     <option value="ORG_ADMIN">Administrador</option>
@@ -493,7 +483,134 @@
                 <p class="success" *ngIf="inviteSuccessMessage">{{ inviteSuccessMessage }}</p>
                 <p class="error" *ngIf="inviteErrorMessage">{{ inviteErrorMessage }}</p>
               </div>
+              </div>
               <!-- import/report actions removidas -->
+            </div>
+          </div>
+
+          <!-- Seção de Visualizar Membros por Treinamento (ORG_ADMIN) -->
+          <div class="org-view-trainings" *ngIf="isOrgAdmin() && selectedOrgId">
+            <h4>Ver membros por treinamento</h4>
+            
+            <div *ngIf="assignableTrainings.length === 0" class="empty-members-message">
+              Nenhum treinamento disponível para esta organização.
+            </div>
+
+            <div *ngIf="assignableTrainings.length > 0" class="trainings-accordion">
+              <div 
+                *ngFor="let training of assignableTrainings; trackBy: trackByTrainingId" 
+                class="accordion-item"
+                [class.expanded]="expandedTrainingId === (training.id || training.trainingId || training.uuid || training._id)">
+                
+                <button 
+                  class="accordion-trigger"
+                  (click)="toggleTrainingExpanded(training.id || training.trainingId || training.uuid || training._id)"
+                  [attr.aria-expanded]="expandedTrainingId === (training.id || training.trainingId || training.uuid || training._id)"
+                  type="button">
+                  <span class="accordion-icon">▶</span>
+                  <span class="accordion-title">{{ training.title || training.name || training.titlePlain }}</span>
+                </button>
+
+                <div *ngIf="expandedTrainingId === (training.id || training.trainingId || training.uuid || training._id)" class="accordion-content">
+                  <div *ngIf="enrolledMembersLoading" class="loading-state">
+                    <span class="spinner"></span>
+                    <p>Carregando membros matriculados…</p>
+                  </div>
+
+                  <div *ngIf="!enrolledMembersLoading && enrolledMembersError" class="error-state">
+                    {{ enrolledMembersError }}
+                  </div>
+
+                  <div *ngIf="!enrolledMembersLoading && enrolledMembers.length > 0" class="members-badges">
+                    <div class="members-count">{{ enrolledMembers.length }} membro(s) matriculado(s)</div>
+                    <div class="members-grid">
+                      <div *ngFor="let member of enrolledMembers; trackBy: trackByMemberId" class="member-pill">
+                        <span class="member-name">{{ member.fullName || member.userEmail || member.name }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div *ngIf="!enrolledMembersLoading && enrolledMembers.length === 0" class="empty-state">
+                    Nenhum membro matriculado neste treinamento.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção de Matricula em Massa (ORG_ADMIN) -->
+          <div class="org-enroll-mass" *ngIf="isOrgAdmin()">
+            <h4>Matricular membros em massa</h4>
+            
+            <div *ngIf="!selectedOrgId" class="empty-members-message">
+              Selecione uma organização no painel acima para matricular membros.
+            </div>
+
+            <div *ngIf="selectedOrgId" class="enroll-panel">
+              <!-- Training Selection -->
+              <div class="enroll-training-select">
+                <label aria-label="Selecione um treinamento para matrícula em massa">
+                  Treinamento
+                </label>
+                <select *ngIf="isOrgAdmin()" [(ngModel)]="selectedTrainingId" (change)="onTrainingSelected()" aria-label="Selecione um treinamento">
+                  <option value="">-- Selecione um treinamento --</option>
+                  <option *ngFor="let t of assignableTrainings; trackBy: trackByTrainingId" [value]="t.id || t.trainingId || t.uuid || t._id">
+                    {{ t.title || t.name || t.titlePlain || t.trainingTitle }}
+                  </option>
+                </select>
+                <div *ngIf="assignableTrainingsLoading" class="small">Carregando treinamentos…</div>
+                <div *ngIf="assignableTrainingsError" class="small">{{ assignableTrainingsError }}</div>
+              </div>
+
+              <!-- Members Selection -->
+              <div class="enroll-members-section">
+                <div class="enroll-members-label">
+                  Membros da organização 
+                  <span *ngIf="orgMembers && orgMembers.length" class="members-count">
+                    ({{ selectedMemberIds.size }} de {{ orgMembers.length }} selecionados)
+                  </span>
+                </div>
+
+                <div *ngIf="orgMembers && orgMembers.length" class="members-list">
+                  <label *ngFor="let m of orgMembers; trackBy: trackByMemberId" 
+                    class="member-checkbox"
+                    [class.disabled]="isMemberAlreadyEnrolled(m.userId)">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isMemberSelected(m.userId) || isMemberAlreadyEnrolled(m.userId)" 
+                      (change)="toggleMemberSelection(m.userId)"
+                      [disabled]="isMemberAlreadyEnrolled(m.userId)"
+                      [attr.aria-label]="isMemberAlreadyEnrolled(m.userId) ? 'Membro j\u00e1 matriculado' : 'Selecionar membro'" />
+                    <span>{{ m.fullName || m.userEmail }}</span>
+                    <span *ngIf="isMemberAlreadyEnrolled(m.userId)" class="enrolled-tag">Matriculado</span>
+                  </label>
+                </div>
+                
+                <div *ngIf="!orgMembers || orgMembers.length === 0" class="empty-members-message">
+                  Nenhum membro encontrado para esta organização.
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <div class="enroll-actions">
+                <button 
+                  class="btn btn-primary" 
+                  type="button" 
+                  (click)="enrollSelectedMembers()" 
+                  [disabled]="enrollLoading || !selectedTrainingId || selectedMemberIds.size === 0"
+                  aria-label="Enviar matrícula dos membros selecionados no treinamento">
+                  <span *ngIf="!enrollLoading"><i class="fas fa-check"></i> Matricular membros selecionados</span>
+                  <span *ngIf="enrollLoading"><i class="fas fa-spinner fa-spin"></i> Matriculando…</span>
+                </button>
+              </div>
+
+              <!-- Feedback Messages -->
+              <div *ngIf="enrollSuccessMessage" class="enroll-feedback success-message">
+                {{ enrollSuccessMessage }}
+              </div>
+              <div *ngIf="enrollErrorMessage" class="enroll-feedback error-message">
+                {{ enrollErrorMessage }}
+              </div>
             </div>
           </div>
 
@@ -503,7 +620,7 @@
             <div class="sector-adoption">
               <p class="small">Selecione setores do catálogo para sua organização:</p>
               <div class="sector-input-group">
-                <select [(ngModel)]="selectedSectorId" class="sector-select" aria-label="Selecione um setor">
+                <select *ngIf="isOrgAdmin()" [(ngModel)]="selectedSectorId" class="sector-select" aria-label="Selecione um setor">
                   <option value="">-- Selecione um setor --</option>
                   <option *ngFor="let s of availableSectors" [value]="s.id">{{s.name}}</option>
                 </select>
@@ -531,11 +648,6 @@
             <div *ngIf="sectorSuccessMessage" class="success-message">{{ sectorSuccessMessage }}</div>
           </div>
         </div>
-  <!-- título removido: redundante com a listagem de organizações -->
-
-        <div *ngIf="orgMembersLoading" class="loading">Carregando membros…</div>
-        <div *ngIf="!orgMembersLoading && orgMembersError" class="error">{{ orgMembersError }}</div>
-      </div>
 
       <!-- import/reports views removidas -->
     </div>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'pros-admin-training-card',
@@ -286,6 +287,7 @@ export class AdminTrainingCardComponent {
   @Input() onDetailsClick?: (training: any) => void;
   @Input() onAccessClick?: (training: any) => void;
   private readonly adminService = inject(AdminService);
+  private readonly auth = inject(AuthService);
 
   getEntityType(): string {
     const entityType = String(this.training?.entityType || this.training?.trainingEntityType || 'UNKNOWN').toUpperCase();
@@ -344,6 +346,13 @@ export class AdminTrainingCardComponent {
     if (this.training?.coverImageUrl) return;
     const id = String(this.training?.id ?? this.training?.trainingId ?? this.training?.uuid ?? this.training?._id ?? '');
     if (!id) return;
+    // Only call admin endpoint if current user is admin (system or org admin).
+    const orgId = String(this.training?.organizationId ?? this.training?.orgId ?? '');
+    if (!this.auth.isSystemAdmin() && !this.auth.hasOrganizationRole('ORG_ADMIN', orgId)) {
+      // not allowed to call admin endpoint — give up silently
+      return;
+    }
+
     // fetch detailed training from admin endpoint to try to get original cover
     this.adminService.getTrainingById(id).subscribe({
       next: detailed => {

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiService } from './api.service';
@@ -12,6 +13,7 @@ describe('CatalogService', () => {
     apiService = jasmine.createSpyObj<ApiService>('ApiService', ['get']);
 
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
         CatalogService,
         { provide: ApiService, useValue: apiService }

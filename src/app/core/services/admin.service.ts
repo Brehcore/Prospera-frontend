@@ -234,6 +234,16 @@ export class AdminService {
   }
 
   /**
+   * Lista membros matriculados em um treinamento específico da organização
+   * GET /organizations/{orgId}/trainings/{trainingId}/enrollments
+   */
+  getEnrolledMembers(orgId: string, trainingId: string): Observable<any[]> {
+    if (!orgId || !trainingId) return of([]);
+    const path = `/organizations/${encodeURIComponent(orgId)}/trainings/${encodeURIComponent(trainingId)}/enrollments`;
+    return this.api.get<unknown>(path).pipe(map(resp => this.unwrapList<any>(resp)));
+  }
+
+  /**
    * Matricula em massa membros da organização em um treinamento.
    * POST /organizations/{orgId}/enrollments
    */

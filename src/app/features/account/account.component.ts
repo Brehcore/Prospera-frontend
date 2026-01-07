@@ -11,6 +11,7 @@ import { SubscriptionService, UserSubscription } from '../../core/services/subsc
 import { AdminService } from '../../core/services/admin.service';
 import { UserProfile } from '../../core/models/user';
 import { AdminTrainingCardComponent } from './admin-training-card.component';
+import { TrainingsComponent } from '../trainings/trainings.component';
 
 interface AccountMenuItem {
   id: 'profile' | 'plans' | 'manageCompanies' | 'learning';
@@ -36,7 +37,7 @@ interface CompanySubuser {
 @Component({
   selector: 'pros-account',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, AdminTrainingCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, AdminTrainingCardComponent, TrainingsComponent],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss']
 })
@@ -132,6 +133,21 @@ export class AccountComponent implements OnInit {
   sectorsLoading = false;
   sectorError = '';
   sectorSuccessMessage = '';
+  // Matricula em massa
+  assignableTrainings: any[] = [];
+  assignableTrainingsLoading = false;
+  assignableTrainingsError = '';
+  selectedTrainingId: string | null = null;
+  selectedMemberIds: Set<string> = new Set();
+  enrollLoading = false;
+  enrollSuccessMessage = '';
+  enrollErrorMessage = '';
+  // Membros matriculados no treinamento selecionado
+  enrolledMembers: any[] = [];
+  enrolledMembersLoading = false;
+  enrolledMembersError = '';
+  // Accordion state para ver membros de um treinamento
+  expandedTrainingId: string | null = null;
   // Organizations
   organizations: Array<{ id: string; name: string; cnpj?: string }> = [];
   orgsLoading = false;
@@ -358,6 +374,7 @@ export class AccountComponent implements OnInit {
           }
           // Carregar setores do catálogo e setores adotados pela org após carregar membros
           try { this.loadSectors(orgId); } catch (e) { console.warn('[Account] loadSectors falhou', e); }
+          try { this.loadAssignableTrainings(orgId); } catch (e) { console.warn('[Account] loadAssignableTrainings falhou', e); }
         },
         error: err => {
           this.orgMembersLoading = false;
@@ -553,7 +570,10 @@ export class AccountComponent implements OnInit {
     const email = (this.inviteForm.value.email ?? '').trim();
     const role = String(this.inviteForm.value.role || 'ORG_MEMBER');
     // Prefer the currently selected organization in the UI, fall back to user's company/orgs
-  const orgId = String(this.selectedOrgId || (((this.user?.company as any)?.['id']) ?? (((this.user?.organizations as any)?.[0]?.['id']) ?? '')));
+  const orgFromCompany = (this.user?.company as any)?.['id'];
+    const firstOrg = (this.user?.organizations as any)?.[0] ?? null;
+    const orgFromOrgs = firstOrg ? (firstOrg['organizationId'] ?? firstOrg['orgId'] ?? firstOrg['id'] ?? firstOrg['organization_id']) : null;
+    const orgId = String(this.selectedOrgId ?? orgFromCompany ?? orgFromOrgs ?? '');
     if (!orgId) {
       this.inviteErrorMessage = 'Organização não encontrada. Selecione uma organização antes de adicionar membros.';
       return;
@@ -604,6 +624,7 @@ export class AccountComponent implements OnInit {
         }
         // Carregar setores disponíveis e da organização (para ORG_ADMIN)
         this.loadSectors(orgId);
+        try { this.loadAssignableTrainings(orgId); } catch (e) { console.warn('[Account] loadAssignableTrainings falhou', e); }
       },
       error: err => {
         console.warn('[Account] falha ao carregar membros da org', err);
@@ -666,6 +687,178 @@ export class AccountComponent implements OnInit {
       error: (err) => {
         console.error('[Account] Erro ao carregar setores da organização:', err);
         this.organizationSectors = [];
+      }
+    });
+  }
+
+  /**
+   * Carrega treinamentos que podem ser atribuídos/contratados para a organização
+   * GET /organizations/{orgId}/assignable-trainings
+   */
+  private loadAssignableTrainings(orgId: string): void {
+    this.assignableTrainings = [];
+    this.assignableTrainingsLoading = true;
+    this.assignableTrainingsError = '';
+    if (!orgId) {
+      this.assignableTrainingsLoading = false;
+      return;
+    }
+    this.adminService.getAssignableTrainingsForOrg(orgId).subscribe({
+      next: list => {
+        this.assignableTrainingsLoading = false;
+        if (Array.isArray(list)) {
+          this.assignableTrainings = list;
+        } else if (list && typeof list === 'object') {
+          // try several common shapes
+          if (Array.isArray((list as any).items)) this.assignableTrainings = (list as any).items;
+          else if (Array.isArray((list as any).data)) this.assignableTrainings = (list as any).data;
+          else if (Array.isArray((list as any).content)) this.assignableTrainings = (list as any).content;
+          else this.assignableTrainings = [];
+        } else {
+          this.assignableTrainings = [];
+        }
+      },
+      error: err => {
+        console.warn('[Account] falha ao carregar treinamentos atribuiveis', err);
+        this.assignableTrainingsLoading = false;
+        this.assignableTrainingsError = err?.message ?? 'Falha ao carregar treinamentos.';
+      }
+    });
+  }
+
+  isMemberSelected(userId?: string | null): boolean {
+    if (!userId) return false;
+    return this.selectedMemberIds.has(String(userId));
+  }
+
+  isMemberAlreadyEnrolled(userId?: string | null): boolean {
+    if (!userId) return false;
+    const id = String(userId);
+    return this.enrolledMembers.some(m => String(m.userId || m.id) === id);
+  }
+
+  toggleMemberSelection(userId?: string | null): void {
+    if (!userId) return;
+    const id = String(userId);
+    if (this.selectedMemberIds.has(id)) this.selectedMemberIds.delete(id);
+    else this.selectedMemberIds.add(id);
+  }
+
+  onTrainingSelected(): void {
+    // Quando um treinamento é selecionado, carregar membros já matriculados
+    if (this.selectedOrgId && this.selectedTrainingId) {
+      // Limpar checkboxes selecionados anteriormente
+      this.selectedMemberIds.clear();
+      this.loadEnrolledMembers();
+    } else {
+      // Se voltou para "-- Selecione um treinamento --", limpar tudo
+      this.selectedMemberIds.clear();
+      this.enrolledMembers = [];
+      this.enrolledMembersError = '';
+      this.enrollSuccessMessage = '';
+      this.enrollErrorMessage = '';
+    }
+  }
+
+  toggleTrainingExpanded(trainingId: string | null): void {
+    // Se já está expandido, fecha; caso contrário abre e carrega membros
+    if (this.expandedTrainingId === trainingId) {
+      this.expandedTrainingId = null;
+    } else {
+      this.expandedTrainingId = trainingId;
+      if (trainingId && this.selectedOrgId) {
+        this.loadEnrolledMembersForTraining(trainingId);
+      }
+    }
+  }
+
+  private loadEnrolledMembersForTraining(trainingId: string): void {
+    if (!this.selectedOrgId) return;
+    this.enrolledMembers = [];
+    this.enrolledMembersLoading = true;
+    this.enrolledMembersError = '';
+    this.adminService.getEnrolledMembers(this.selectedOrgId, trainingId).subscribe({
+      next: list => {
+        this.enrolledMembersLoading = false;
+        if (Array.isArray(list)) {
+          this.enrolledMembers = list;
+        } else {
+          this.enrolledMembers = [];
+        }
+      },
+      error: err => {
+        console.warn('[Account] falha ao carregar membros matriculados no treinamento', err);
+        this.enrolledMembersLoading = false;
+        this.enrolledMembersError = err?.message ?? 'Falha ao carregar membros matriculados.';
+      }
+    });
+  }
+
+  private loadEnrolledMembers(): void {
+    if (!this.selectedOrgId || !this.selectedTrainingId) {
+      this.enrolledMembers = [];
+      return;
+    }
+    this.enrolledMembers = [];
+    this.enrolledMembersLoading = true;
+    this.enrolledMembersError = '';
+    this.adminService.getEnrolledMembers(this.selectedOrgId, String(this.selectedTrainingId)).subscribe({
+      next: list => {
+        this.enrolledMembersLoading = false;
+        if (Array.isArray(list)) {
+          this.enrolledMembers = list;
+        } else {
+          this.enrolledMembers = [];
+        }
+      },
+      error: err => {
+        console.warn('[Account] falha ao carregar membros matriculados', err);
+        this.enrolledMembersLoading = false;
+        this.enrolledMembersError = err?.message ?? 'Falha ao carregar membros matriculados.';
+      }
+    });
+  }
+
+  trackByTrainingId(index: number, training: any): string {
+    return training?.id ?? training?.trainingId ?? training?.uuid ?? training?._id ?? index;
+  }
+
+  trackByMemberId(index: number, member: any): string {
+    return member?.userId ?? member?.id ?? member?.membershipId ?? index;
+  }
+
+  enrollSelectedMembers(): void {
+    this.enrollSuccessMessage = '';
+    this.enrollErrorMessage = '';
+    if (!this.selectedOrgId) {
+      this.enrollErrorMessage = 'Selecione uma organização.';
+      return;
+    }
+    const trainingId = String(this.selectedTrainingId || '');
+    if (!trainingId) {
+      this.enrollErrorMessage = 'Selecione um treinamento.';
+      return;
+    }
+    const userIds = Array.from(this.selectedMemberIds).filter(Boolean);
+    if (!userIds.length) {
+      this.enrollErrorMessage = 'Selecione ao menos um membro.';
+      return;
+    }
+    this.enrollLoading = true;
+    this.adminService.enrollMembersInTraining(this.selectedOrgId, { trainingId, userIds }).subscribe({
+      next: () => {
+        this.enrollLoading = false;
+        this.enrollSuccessMessage = 'Membros matriculados com sucesso.';
+        // limpar seleção
+        this.selectedMemberIds.clear();
+        // opcional: recarregar membros/enrollments
+        try { this.loadOrganizationMembers(); } catch {}
+        setTimeout(() => { this.enrollSuccessMessage = ''; }, 4000);
+      },
+      error: err => {
+        console.error('[Account] enrollMembersInTraining error', err);
+        this.enrollLoading = false;
+        this.enrollErrorMessage = err?.message ?? 'Falha ao matricular membros.';
       }
     });
   }
@@ -871,11 +1064,41 @@ export class AccountComponent implements OnInit {
 
   /**
    * Verifica se o usuário é ORG_ADMIN na organização selecionada
+   * Verifica se o usuário atual está na lista de membros da org com role ORG_ADMIN
    */
   isOrgAdmin(): boolean {
-    if (!this.user) return false;
-    // Usa AuthService para verificar se é ORG_ADMIN
-    return this.authService.isOrgAdmin();
+    if (!this.selectedOrgId) {
+      console.debug('[Account] isOrgAdmin check: false (no selectedOrgId)');
+      return false;
+    }
+
+    // First, prefer the cached organization memberships from AuthService
+    try {
+      const hasOrgAdmin = this.authService.hasOrganizationRole('ORG_ADMIN', this.selectedOrgId);
+      if (hasOrgAdmin) {
+        console.debug('[Account] isOrgAdmin check: true (authService membership)');
+        return true;
+      }
+    } catch (e) {
+      console.warn('[Account] isOrgAdmin authService check failed', e);
+    }
+
+    // Fallback: check loaded orgMembers list (backend members payload)
+    if (!this.user?.id) {
+      console.debug('[Account] isOrgAdmin check: false (no user.id)');
+      return false;
+    }
+    const currentMemberAdmin = this.orgMembers.find(m => m.userId === this.user?.id && m.role === 'ORG_ADMIN');
+    const isAdmin = !!currentMemberAdmin;
+    console.debug('[Account] isOrgAdmin check (fallback):', {
+      isAdmin,
+      selectedOrgId: this.selectedOrgId,
+      userId: this.user?.id,
+      memberRole: this.orgMembers.find(m => m.userId === this.user?.id)?.role,
+      totalMembers: this.orgMembers.length,
+      authMemberships: this.authService.getOrganizationMemberships()
+    });
+    return isAdmin;
   }
 
   displayStatus(raw?: string): string {
@@ -895,7 +1118,8 @@ export class AccountComponent implements OnInit {
   }
 
   openLearningCatalog(): void {
-    this.router.navigate(['/catalog']);
+    // Redirect to the personalized trainings area
+    this.router.navigate(['/trainings']);
   }
 
   logout(): void {

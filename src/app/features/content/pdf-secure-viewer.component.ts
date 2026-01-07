@@ -155,6 +155,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 })
 export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   @Input() pdfUrl: string | null = null;
+  @Input() initialPage: number = 1; // Página inicial para restaurar progresso
+  @Input() trainingId: string | null = null; // ID do treinamento para salvar progresso
+  @Input() onPageChange: ((page: number) => void) | null = null; // Callback quando página muda
 
   private readonly cdr = inject(ChangeDetectorRef);
   private canvas: HTMLCanvasElement | null = null;
@@ -198,7 +201,9 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
       .then((doc: any) => {
         this.pdfDoc = doc;
         this.numPages = doc.numPages;
-        this.renderPage(1);
+        // Use initialPage se fornecido, caso contrário página 1
+        const startPage = Math.max(1, Math.min(this.initialPage || 1, doc.numPages));
+        this.renderPage(startPage);
         this.loading = false;
         this.cdr.markForCheck();
       })
@@ -233,6 +238,10 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
       }).promise
         .then(() => {
           this.pageNum = pageNum;
+          // Chamar callback quando página muda
+          if (this.onPageChange) {
+            this.onPageChange(pageNum);
+          }
           this.cdr.markForCheck();
         })
         .catch((err: any) => {
