@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CatalogService } from '../../core/services/catalog.service';
+import { CatalogModalService } from '../../core/services/catalog-modal.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'pros-admin-training-card',
@@ -19,12 +23,18 @@ import { AuthService } from '../../core/services/auth.service';
         <div *ngIf="!training?.coverImageUrl" class="cover-placeholder">
           <i [class]="getTrainingIcon()" aria-hidden="true"></i>
         </div>
-        <ng-container *ngIf="isEntityEbook(); else badgeText">
+        <ng-container *ngIf="getEntityType() === 'ebook'">
           <i class="fas fa-book training-badge-icon" aria-hidden="true"></i>
         </ng-container>
-        <ng-template #badgeText>
+        <ng-container *ngIf="getEntityType() === 'video'">
+          <i class="fas fa-play-circle training-badge-icon" aria-hidden="true"></i>
+        </ng-container>
+        <ng-container *ngIf="getEntityType() === 'live'">
+          <i class="fas fa-calendar-alt training-badge-icon" aria-hidden="true"></i>
+        </ng-container>
+        <ng-container *ngIf="getEntityType() !== 'ebook' && getEntityType() !== 'video' && getEntityType() !== 'live'">
           <span class="training-badge">{{ getEntityTypeLabel() }}</span>
-        </ng-template>
+        </ng-container>
       </div>
 
       <div class="training-content">
@@ -78,7 +88,8 @@ import { AuthService } from '../../core/services/auth.service';
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: auto;
+      min-height: 220px;
       margin: 0 auto;
     }
 
@@ -151,10 +162,10 @@ import { AuthService } from '../../core/services/auth.service';
 
     .training-content {
       padding: 8px;
-      flex: 1;
+      flex: none;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
 
     .training-title {
@@ -288,6 +299,9 @@ export class AdminTrainingCardComponent {
   @Input() onAccessClick?: (training: any) => void;
   private readonly adminService = inject(AdminService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly catalogService = inject(CatalogService);
+  private readonly catalogModal = inject(CatalogModalService);
 
   getEntityType(): string {
     const entityType = String(this.training?.entityType || this.training?.trainingEntityType || 'UNKNOWN').toUpperCase();
@@ -391,8 +405,29 @@ export class AdminTrainingCardComponent {
   }
 
   onDetails(): void {
+    // If parent provided a details handler (e.g. to open a modal), prefer it.
     if (this.onDetailsClick) {
       this.onDetailsClick(this.training);
+      return;
+    }
+
+    // Non-system users without a parent handler should open the public catalog modal
+    if (!this.auth.isSystemAdmin()) {
+      const id = String(this.training?.id ?? this.training?.trainingId ?? this.training?.uuid ?? this.training?._id ?? '');
+      if (id) {
+        this.catalogService.loadCatalog().pipe(take(1)).subscribe({
+          next: items => {
+            const found = (items || []).find(i => i.id === id);
+            if (found) {
+              this.catalogModal.open(found);
+            } else {
+              this.router.navigate(['/catalog'], { queryParams: { id } });
+            }
+          },
+          error: () => this.router.navigate(['/catalog'], { queryParams: { id } })
+        });
+        return;
+      }
     }
   }
 

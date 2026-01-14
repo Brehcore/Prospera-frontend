@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap, throwError, Subscription } from 'rxjs';
 
 import { ApiService } from './api.service';
 import { AuthSession, UserProfile } from '../models/user';
+import { getTokenExpiration, getTimeUntilExpiration, isTokenExpired } from '../utils/jwt.util';
 
 interface LoginPayload {
   email: string;
@@ -31,7 +32,7 @@ interface OrganizationMembership {
 }
 
 @Injectable({ providedIn: 'root' })
-export class AuthService {
+export class AuthService implements OnDestroy {
   private readonly tokenKey = 'jwtToken';
   private readonly emailKey = 'loggedInUserEmail';
   private readonly roleKey = 'systemRole';
@@ -43,6 +44,13 @@ export class AuthService {
   readonly user$ = this.userSubject.asObservable();
   readonly isAuthenticated$ = this.user$.pipe(map(Boolean));
 
+  // Auto-refresh de token
+  private refreshTimer: any = null;
+  private readonly REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // Renovar 5 minutos antes de expirar
+  private isRefreshing = false;
+  private readonly refreshSubject = new BehaviorSubject<boolean>(false);
+  readonly isRefreshing$ = this.refreshSubject.asObservable();
+
   constructor(private readonly api: ApiService, private readonly router: Router) {
     this.normalizedSystemRole = this.normalizeRole(this.getStoredRole());
     const existingToken = this.getToken();
@@ -50,12 +58,28 @@ export class AuthService {
       this.fetchProfile().subscribe({
         error: () => this.clearSession()
       });
+      // Se token existe e é válido, inicia auto-refresh
+      if (!isTokenExpired(existingToken)) {
+        this.scheduleTokenRefresh(existingToken);
+      } else {
+        this.clearSession();
+      }
     }
+  }
+
+  ngOnDestroy(): void {
+    this.stopRefreshTimer();
   }
 
   login(payload: LoginPayload): Observable<UserProfile> {
     return this.api.post<LoginResponse>('/auth/login', payload, { withCredentials: true }).pipe(
-      tap(response => this.persistSession(response)),
+      tap(response => {
+        this.persistSession(response);
+        // Inicia auto-refresh após login bem-sucedido
+        if (response.token && !isTokenExpired(response.token)) {
+          this.scheduleTokenRefresh(response.token);
+        }
+      }),
       switchMap(response => {
         if (response.profile || response.user) {
           const profile = (response.profile || response.user) as UserProfile;
@@ -74,6 +98,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.stopRefreshTimer();
     this.clearSession();
     // Redireciona para home em vez de rota de login (login agora é modal)
     this.router.navigate(['/']);
@@ -300,6 +325,7 @@ export class AuthService {
   }
 
   private clearSession(): void {
+    this.stopRefreshTimer();
     try {
       localStorage.removeItem(this.tokenKey);
       localStorage.removeItem(this.emailKey);
@@ -729,5 +755,85 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  /**
+   * Agenda renovação automática do token JWT
+   * Renovará 5 minutos antes da expiração
+   */
+  private scheduleTokenRefresh(token: string): void {
+    this.stopRefreshTimer(); // Limpar timer anterior se houver
+
+    const timeUntilExpire = getTimeUntilExpiration(token);
+    if (timeUntilExpire <= 0) {
+      console.warn('[AuthService] Token já expirado, não agendando refresh');
+      this.clearSession();
+      return;
+    }
+
+    // Calcular quando fazer refresh (5 min antes de expirar)
+    const refreshIn = Math.max(0, timeUntilExpire - this.REFRESH_THRESHOLD_MS);
+    const expirationDate = getTokenExpiration(token);
+
+    console.log(
+      '[AuthService] Token agendado para refresh em',
+      Math.round(refreshIn / 1000),
+      'segundos (expira em',
+      expirationDate?.toLocaleTimeString() ?? 'data desconhecida',
+      ')'
+    );
+
+    // Agendar refresh para 5 minutos antes da expiração
+    this.refreshTimer = setTimeout(() => {
+      this.attemptTokenRefresh();
+    }, refreshIn) as any;
+  }
+
+  /**
+   * Tenta renovar o token JWT chamando /auth/refresh
+   * Se falhar, faz logout automático
+   */
+  private attemptTokenRefresh(): void {
+    const currentToken = this.getToken();
+    if (!currentToken || this.isRefreshing) {
+      return;
+    }
+
+    console.log('[AuthService] Tentando renovar token...');
+    this.isRefreshing = true;
+    this.refreshSubject.next(true);
+
+    this.api.post<LoginResponse>('/auth/refresh', {}, { withCredentials: true }).subscribe({
+      next: response => {
+        this.isRefreshing = false;
+        this.refreshSubject.next(false);
+
+        if (response?.token) {
+          console.log('[AuthService] Token renovado com sucesso');
+          this.persistSession(response);
+          this.scheduleTokenRefresh(response.token);
+        } else {
+          console.warn('[AuthService] Refresh retornou token vazio');
+          this.clearSession();
+        }
+      },
+      error: error => {
+        this.isRefreshing = false;
+        this.refreshSubject.next(false);
+        console.warn('[AuthService] Falha ao renovar token:', error?.message || error);
+        // Se refresh falhar, fazer logout
+        this.clearSession();
+      }
+    });
+  }
+
+  /**
+   * Para o timer de auto-refresh
+   */
+  private stopRefreshTimer(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 }

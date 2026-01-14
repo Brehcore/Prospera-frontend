@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { take, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
+import { take, takeUntil, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-import { of, Subscription } from 'rxjs';
+import { of, Subscription, Subject } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { SubscriptionService, UserSubscription } from '../../core/services/subscription.service';
@@ -41,9 +41,11 @@ interface CompanySubuser {
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss']
 })
-export class AccountComponent implements OnInit {
+export class AccountComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroy$ = new Subject<void>();
 
   private readonly baseMenuItems: AccountMenuItem[] = [
     { id: 'profile', label: 'Perfil', icon: 'fas fa-user' },
@@ -166,6 +168,16 @@ export class AccountComponent implements OnInit {
   constructor(private readonly authService: AuthService) {}
 
   ngOnInit(): void {
+    // Verificar query params para seleção de seção e reagir a mudanças
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['section']) {
+        const sectionId = params['section'] as AccountMenuItem['id'];
+        if (this.baseMenuItems.some(item => item.id === sectionId)) {
+          this.selectSection(sectionId);
+        }
+      }
+    });
+
     this.authService.user$.pipe(take(1)).subscribe(user => {
       if (user) {
         this.patchUser(user);
@@ -220,6 +232,8 @@ export class AccountComponent implements OnInit {
         });
     }
   }
+
+  
 
   // Trigger CNPJ lookup on blur or explicit user action. This complements the valueChanges auto-lookup
   // and ensures pasted values or quick inputs still trigger a lookup.
@@ -333,6 +347,9 @@ export class AccountComponent implements OnInit {
       this.cnpjSub.unsubscribe();
       this.cnpjSub = null;
     }
+    // limpar subscriptions internas
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   selectOrganization(orgId: string | null) {

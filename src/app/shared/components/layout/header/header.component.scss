@@ -70,23 +70,118 @@
   gap: var(--spacing-xs);
 }
 
-.account-actions .btn-icon {
+.account-menu-wrapper {
+  position: relative;
+}
+
+.account-menu-trigger {
   background: var(--off-white);
   border: 1px solid transparent;
 }
 
-.account-actions .btn-icon:hover,
-.account-actions .btn-icon:focus-visible {
+.account-menu-trigger:hover,
+.account-menu-trigger:focus-visible {
   border-color: var(--verde-escuro);
 }
 
-.account-actions .btn-logout {
-  background: transparent;
-  color: var(--gray-medium);
+/* Account Dropdown Menu */
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  z-index: 1100;
+  animation: slideDown 0.2s ease;
 }
 
-.account-actions .btn-logout:hover {
-  color: var(--coral);
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-user-info {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem 0;
+  color: var(--gray-dark);
+}
+
+.user-email {
+  font-size: 0.85rem;
+  color: var(--gray-medium);
+  margin: 0 0 0.5rem 0;
+}
+
+.profile-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--verde-escuro);
+  font-weight: 600;
+  background: rgba(79, 168, 108, 0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+}
+
+.profile-status i {
+  font-size: 0.75rem;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--gray-light);
+  margin: var(--spacing-xs) 0;
+}
+
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: 0.65rem var(--spacing-lg);
+  border: none;
+  background: transparent;
+  color: var(--gray-dark);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.dropdown-menu-item:hover {
+  background: rgba(79, 168, 108, 0.1);
+  color: var(--verde-escuro);
+}
+
+.dropdown-menu-item i {
+  width: 1.25rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.logout-item {
+  color: #d32f2f;
+}
+
+.logout-item:hover {
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
 }
 
 @media (max-width: 820px) {

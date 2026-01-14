@@ -9,11 +9,12 @@ import { AuthService } from './core/services/auth.service';
 import { FooterComponent } from './shared/components/layout/footer/footer.component';
 import { HeaderComponent } from './shared/components/layout/header/header.component';
 import { AuthModalComponent } from './features/auth/auth-modal/auth-modal.component';
+import { CatalogDetailsModalComponent } from './shared/components/catalog-details-modal/catalog-details-modal.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, AuthModalComponent, AsyncPipe],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, AuthModalComponent, CatalogDetailsModalComponent, AsyncPipe],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
@@ -56,6 +57,32 @@ export class App {
       return primary || 'Minha conta';
     })
   );
+
+  readonly userEmail$ = this.user$.pipe(
+    map(user => {
+      if (!user) {
+        return '';
+      }
+      return user.email || '';
+    })
+  );
+
+  readonly isProfileComplete$ = this.user$.pipe(
+    map(user => {
+      if (!user) {
+        return false;
+      }
+      // Verificar se os campos principais estão preenchidos
+      return !!(user.name || user.fullName) && !!user.email;
+    })
+  );
+
+  readonly accountMenuItems = [
+    { id: 'profile', label: 'Perfil', icon: 'fas fa-user' },
+    { id: 'manageCompanies', label: 'Gerenciar Empresas', icon: 'fas fa-building' },
+    { id: 'plans', label: 'Planos & Assinatura', icon: 'fas fa-layer-group' },
+    { id: 'learning', label: 'Cursos & Treinamentos', icon: 'fas fa-graduation-cap' }
+  ];
 
   readonly footerDescription =
     'Plataforma integrada para desenvolver talentos, promover bem-estar e garantir conformidade nas organizações.';
@@ -127,6 +154,11 @@ export class App {
 
   onLogout(): void {
     this.authService.logout();
+  }
+
+  onMenuItemClick(menuId: string): void {
+    // Navegar para a página de conta com a seção selecionada
+    this.router.navigate(['/conta'], { queryParams: { section: menuId } });
   }
 
 }

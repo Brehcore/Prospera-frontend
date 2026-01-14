@@ -1,15 +1,21 @@
 <div class="app-shell">
   <pros-layout-header
-  [navItems]="(navItems$ | async) ?? []"
+    [navItems]="(navItems$ | async) ?? []"
     [isAuthenticated]="(isAuthenticated$ | async) ?? false"
     [userLabel]="(accountLabel$ | async) ?? 'Minha conta'"
+    [userEmail]="(userEmail$ | async) ?? ''"
+    [isProfileComplete]="(isProfileComplete$ | async) ?? false"
+    [accountMenuItems]="accountMenuItems"
     (accountClick)="onAccountClick()"
     (logout)="onLogout()"
+    (menuItemClick)="onMenuItemClick($event)"
   ></pros-layout-header>
 
   <main class="app-content">
     <router-outlet />
   </main>
+
+  <pros-catalog-details-modal></pros-catalog-details-modal>
 
   @if (showAuthModal) {
     <pros-auth-modal (closed)="onCloseAuthModal()"></pros-auth-modal>

@@ -1,37 +1,5 @@
 <section class="account-page" *ngIf="!isLoading; else loading">
-  <div class="container">
-    <aside class="account-sidebar" *ngIf="user">
-      <div class="user-summary">
-        <div>
-          <p class="user-name">{{ displayName }}</p>
-          <p class="user-email">{{ displayEmail }}</p>
-        </div>
-      </div>
-
-      <div class="user-status">
-        <span class="badge" [class.badge-warning]="!isProfileComplete">
-          {{ isProfileComplete ? 'Perfil completo' : 'Complete seu perfil' }}
-        </span>
-      </div>
-
-      <nav class="account-menu" aria-label="Seções da conta">
-        <button
-          type="button"
-          *ngFor="let item of menuItems"
-          (click)="selectSection(item.id)"
-          [class.active]="activeSection === item.id"
-        >
-          <i [class]="item.icon" aria-hidden="true"></i>
-          {{ item.label }}
-        </button>
-      </nav>
-
-      <button type="button" class="btn btn-secondary logout" (click)="logout()">
-        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-        Sair da conta
-      </button>
-    </aside>
-
+  <div class="container account-container">
     <main class="account-content" *ngIf="user">
       <ng-container [ngSwitch]="activeSection">
         <section *ngSwitchCase="'profile'" class="profile-section">
@@ -264,7 +232,6 @@
         <section *ngSwitchCase="'learning'" class="card stretch">
           <header>
             <h1>Cursos & Treinamentos</h1>
-            <p>Centralize o acompanhamento da jornada de aprendizagem da sua empresa.</p>
           </header>
           <div class="learning-body">
             <!-- If the current user is a system admin, show admin trainings and a note about full access -->

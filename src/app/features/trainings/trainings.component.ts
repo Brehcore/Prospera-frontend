@@ -2,6 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '../../core/services/training.service';
+import { CatalogService, CatalogItem } from '../../core/services/catalog.service';
+import { CatalogModalService } from '../../core/services/catalog-modal.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'pros-trainings',
@@ -38,16 +41,16 @@ import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '
               <div class="accent-bar" aria-hidden="true"></div>
               <div class="cover" *ngIf="e.coverImageUrl" [style.backgroundImage]="'url(' + e.coverImageUrl + ')'" role="img" aria-label="Capa do treinamento"></div>
               <div class="content">
-                <h3 class="title">{{ e.trainingTitle || ('Treinamento ' + e.trainingId) }}</h3>
+                <h3 class="title">{{ e.trainingTitle || 'Treinamento' }}</h3>
                 <div class="org-line">
                   <i class="fas fa-user-circle" aria-hidden="true"></i>
                   <span class="org-name">Go-Tree Consultoria</span>
                 </div>
                 <p class="muted">Matriculado em {{ e.enrolledAt | date:'dd/MM/yyyy' }}</p>
                 <div class="card-actions">
-                  <button class="btn btn-secondary" (click)="$event.stopPropagation();">Detalhes</button>
-                  <button class="btn btn-primary" (click)="$event.stopPropagation(); openTraining(e)">Acessar</button>
-                </div>
+                    <button class="btn btn-secondary" (click)="$event.stopPropagation(); openDetails(e)">Detalhes</button>
+                    <button class="btn btn-primary" (click)="$event.stopPropagation(); openTraining(e)">Acessar</button>
+                  </div>
                 <div class="progress-wrap">
                   <div class="progress-bar" *ngIf="e.progressPercentage !== undefined && e.progressPercentage !== null">
                     <div class="progress-fill" [style.width.%]="e.progressPercentage"></div>
@@ -96,6 +99,8 @@ import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '
 export class TrainingsComponent implements OnInit {
   private readonly trainingService = inject(TrainingService);
   private readonly router = inject(Router);
+  private readonly catalogService = inject(CatalogService);
+  private readonly catalogModal = inject(CatalogModalService);
 
   readonly catalog = signal<TrainingCatalogItemDTO[] | null>(null);
   readonly loading = computed(() => this.catalog() === null);
@@ -113,6 +118,22 @@ export class TrainingsComponent implements OnInit {
     if (!id) return;
     // Abrir a página do curso em vez de tentar abrir blob (melhor UX e mesma página de SYSTEM_ADMIN)
     this.router.navigate(['/conteudo/visualizar', id]);
+  }
+
+  openDetails(enrollment: EnrollmentResponseDTO) {
+    const id = enrollment.trainingId || enrollment.enrollmentId || '';
+    if (!id) return;
+    this.catalogService.loadCatalog().pipe(take(1)).subscribe({
+      next: (items: CatalogItem[]) => {
+        const found = (items || []).find(i => i.id === id);
+        if (found) {
+          this.catalogModal.open(found);
+        } else {
+          this.router.navigate(['/catalog'], { queryParams: { id } });
+        }
+      },
+      error: () => this.router.navigate(['/catalog'], { queryParams: { id } })
+    });
   }
 
   load() {

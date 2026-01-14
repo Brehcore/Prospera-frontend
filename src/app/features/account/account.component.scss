@@ -4,136 +4,11 @@
 }
 
 .account-page .container {
-  display: grid;
-
-/* Improved invite role dropdown & inline layout */
-.invite-row { display: grid; grid-template-columns: 1fr 160px auto; gap: 8px; align-items: center; }
-.invite-email input { width: 100%; }
-.invite-role select {
-  width: 100%;
-  padding: 0.55rem 0.6rem;
-  border: 1px solid var(--gray-light);
-  border-radius: var(--border-radius-md);
-  background: var(--white);
-  font-weight: 600;
-  color: var(--gray-dark);
-}
-.invite-role select:focus { outline: none; box-shadow: 0 0 0 3px rgba(79,168,108,0.08); border-color: var(--verde-escuro); }
-.invite-actions { display:flex; align-items:center; }
-.invite-row .btn { padding: 0.55rem 0.9rem; }
-
-@media (max-width: 640px) {
-  .invite-row { grid-template-columns: 1fr; }
-  .invite-role { order: 2; }
-  .invite-actions { order: 3; justify-content: flex-start; }
-}
-  grid-template-columns: 320px 1fr;
-  gap: var(--spacing-xl);
-  align-items: flex-start;
+  display: block;
 }
 
-.account-sidebar {
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  position: sticky;
-  top: var(--spacing-xl);
-}
-
-.user-summary {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.avatar {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 1.4rem;
-  color: var(--white);
-  background: linear-gradient(135deg, var(--verde-escuro), var(--verde-claro));
-}
-
-.user-name {
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-
-.user-email {
-  color: var(--gray-medium);
-  font-size: 0.9rem;
-}
-
-.user-status {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.badge {
-  align-self: flex-start;
-  background: rgba(79, 168, 108, 0.12);
-  color: var(--verde-escuro);
-  font-weight: 600;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-}
-
-.badge-warning {
-  background: rgba(255, 164, 81, 0.15);
-  color: #c25600;
-}
-
-.user-role {
-  color: var(--gray-medium);
-  font-size: 0.85rem;
-}
-
-.account-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.account-menu button {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  border: none;
-  background: transparent;
-  color: var(--gray-dark);
-  font-weight: 600;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--border-radius-md);
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.account-menu button:hover,
-.account-menu button.active {
-  background: rgba(79, 168, 108, 0.12);
-  color: var(--verde-escuro);
-}
-
-.account-menu i {
-  width: 1.25rem;
-  text-align: center;
-}
-
-.logout {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  width: 100%;
-  justify-content: center;
+.account-container {
+  position: relative;
 }
 
 .account-content {
@@ -275,6 +150,41 @@
   outline: none;
   border-color: var(--verde-escuro);
   box-shadow: 0 0 0 3px rgba(79, 168, 108, 0.2);
+}
+
+/* Styled select for invite role */
+.invite-role {
+  position: relative;
+  display: inline-block;
+}
+
+.invite-role select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0.38rem 1.8rem 0.38rem 0.6rem;
+  border: 1px solid rgba(31,42,55,0.12);
+  border-radius: 8px;
+  background-color: var(--white);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'><path stroke='%234a4a4a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-dark);
+  cursor: pointer;
+}
+
+.invite-role select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79,168,108,0.12);
+  border-color: var(--verde-escuro);
+}
+
+@media (max-width: 640px) {
+  .invite-role select {
+    padding-right: 1.4rem;
+  }
 }
 
 .form-actions {
@@ -664,7 +574,7 @@
 
 .learning-card {
   background: rgba(31, 42, 55, 0.04);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   display: grid;
   gap: var(--spacing-sm);
@@ -673,6 +583,20 @@
 .learning-card ul {
   margin: 0;
   padding-left: 1.1rem;
+}
+
+/* Compact styling for learning-card header text */
+.learning-card h2 {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 700;
+  color: var(--gray-darker, #1f2a37);
+}
+
+.learning-card p {
+  font-size: 0.875rem;
+  margin: 0;
+  color: var(--gray-medium);
 }
 
 /* Admin trainings container and grid styling */

@@ -506,7 +506,10 @@ export class AdminTrainingDetailComponent {
   sectorName(sectorId: string | null | undefined): string {
     if (!sectorId) return '—';
     const found = this.sectors().find(s => s.id === sectorId);
-    return found?.name || sectorId;
+    const candidate = found?.name || sectorId;
+    const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (guidRegex.test(String(candidate))) return '—';
+    return candidate;
   }
 
   displaySectorType(type: string | null | undefined): string {
