@@ -85,7 +85,7 @@
         </div>
         <h2 class="catalog-card-title">{{ item.title }}</h2>
         <p class="catalog-card-author" *ngIf="item.author">{{ item.author }}</p>
-        <div class="catalog-card-meta" *ngIf="item.sectors?.length">
+        <div class="catalog-card-meta" *ngIf="item.sectors.length">
           <span class="catalog-card-sector" *ngFor="let sectorId of item.sectors">{{ sectorName(sectorId) | uppercase }}</span>
         </div>
         <div class="catalog-card-actions">

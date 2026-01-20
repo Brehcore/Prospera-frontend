@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { take, takeUntil, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap } from 'rxjs/operators';
+import { take, takeUntil, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap, finalize } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { of, Subscription, Subject } from 'rxjs';
 
@@ -72,10 +72,14 @@ export class AccountComponent implements OnInit, OnDestroy {
     birth: ['']
   });
 
-  readonly passwordForm = this.fb.nonNullable.group({
-    currentPassword: [''],
-    newPassword: ['', [Validators.required, Validators.minLength(6)]]
-  });
+  readonly passwordForm = this.fb.nonNullable.group(
+    {
+      currentPassword: ['', [Validators.required]],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]]
+    },
+    { validators: this.passwordMatchValidator() }
+  );
 
   readonly inviteForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -552,9 +556,37 @@ export class AccountComponent implements OnInit, OnDestroy {
       },
       error: error => {
         this.isSaving = false;
-        this.errorMessage = error?.message || 'Não foi possível atualizar o perfil agora.';
+        // Extrair mensagem de erro de forma robusta
+        let errorMsg = 'Não foi possível atualizar o perfil. Tente novamente.';
+        
+        if (error?.message) {
+          errorMsg = error.message;
+        } else if (error?.error?.message) {
+          errorMsg = error.error.message;
+        } else if (error?.error?.error) {
+          errorMsg = error.error.error;
+        }
+        
+        this.errorMessage = errorMsg;
       }
     });
+  }
+
+  passwordMatchValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const newPassword = control.get('newPassword');
+      const confirmPassword = control.get('confirmPassword');
+
+      if (!newPassword || !confirmPassword) {
+        return null;
+      }
+
+      return newPassword.value === confirmPassword.value ? null : { passwordMismatch: true };
+    };
+  }
+
+  getPasswordMatchError(): boolean {
+    return this.passwordForm.hasError('passwordMismatch') && this.passwordForm.touched;
   }
 
   savePassword(): void {
@@ -562,18 +594,36 @@ export class AccountComponent implements OnInit, OnDestroy {
       this.passwordForm.markAllAsTouched();
       return;
     }
-    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+
+    const currentPassword = this.passwordForm.get('currentPassword')?.value?.trim();
+    const newPassword = this.passwordForm.get('newPassword')?.value || '';
+    const confirmPassword = this.passwordForm.get('confirmPassword')?.value || '';
+
+    if (!currentPassword) {
+      this.passwordErrorMessage = 'A senha atual é obrigatória. Se não se lembra da sua senha, faça logout e use "Esqueci minha senha".';
+      return;
+    }
+
     this.passwordSuccessMessage = '';
     this.passwordErrorMessage = '';
-    this.authService.updatePassword(newPassword, currentPassword || undefined).subscribe({
-      next: () => {
-        this.passwordSuccessMessage = 'Senha atualizada com sucesso!';
-        this.passwordForm.reset();
-      },
-      error: error => {
-        this.passwordErrorMessage = error?.message || 'Não foi possível atualizar a senha agora.';
-      }
-    });
+    this.isSaving = true;
+
+    this.authService.updatePassword(newPassword, currentPassword, confirmPassword)
+      .pipe(finalize(() => { this.isSaving = false; }))
+      .subscribe({
+        next: () => {
+          this.passwordSuccessMessage = 'Senha alterada com sucesso!';
+          this.passwordForm.reset();
+        },
+        error: (error) => {
+          // Tratar erro específico de senha incorreta
+          if (error?.status === 401 || error?.error?.message?.includes('current') || error?.error?.message?.includes('atual')) {
+            this.passwordErrorMessage = 'A senha atual informada está incorreta.';
+          } else {
+            this.passwordErrorMessage = error?.error?.message || 'Não foi possível alterar a senha. Tente novamente.';
+          }
+        }
+      });
   }
 
   inviteSubuser(): void {

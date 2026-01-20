@@ -97,6 +97,11 @@ export const routes: Routes = [
 		data: { title: 'FAQ' }
 	},
 	{
+		path: 'reset-password',
+		loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+		data: { title: 'Redefinir Senha' }
+	},
+	{
 		path: 'politicas',
 		loadComponent: () => import('./features/policies/policies.component').then(m => m.PoliciesComponent),
 		data: { title: 'Políticas' }

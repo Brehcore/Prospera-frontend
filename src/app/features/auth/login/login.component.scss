@@ -11,7 +11,7 @@
 
 .auth-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   background: var(--off-white);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-xxs);
@@ -44,6 +44,71 @@
 
 .field-error { color:var(--coral); font-size:.7rem; }
 
+.auth-field-helper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.35rem;
+}
+
+.btn-link-small {
+  color: var(--verde-escuro);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  &:focus {
+    outline: 2px solid var(--verde-escuro);
+    outline-offset: 2px;
+  }
+}
+
+.btn-forgot-password {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  color: var(--verde-escuro);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  i {
+    font-size: 0.75rem;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &:hover {
+    background-color: rgba(0, 90, 50, 0.08);
+    color: var(--verde-escuro);
+
+    i {
+      transform: rotate(-20deg) scale(1.1);
+    }
+  }
+
+  &:active {
+    background-color: rgba(0, 90, 50, 0.12);
+    transform: scale(0.98);
+  }
+
+  &:focus {
+    outline: 2px solid var(--verde-escuro);
+    outline-offset: 2px;
+  }
+}
+
 .auth-messages .error {
   color: var(--coral);
   font-weight: 600;
@@ -56,10 +121,85 @@
 
 button.btn.btn-primary { padding:.6rem .9rem; font-size:.85rem; line-height:1; }
 
+/* Forgot Password Success State */
+.forgot-password-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  text-align: center;
+
+  .success-icon {
+    font-size: 3rem;
+    color: var(--verde-escuro, #228b22);
+    animation: scaleIn 0.5s ease;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-darker, #1f2a37);
+  }
+
+  p {
+    margin: 0;
+    color: var(--gray-medium, #666);
+    line-height: 1.5;
+    font-size: 0.9rem;
+  }
+
+  .btn-secondary {
+    margin-top: 0.5rem;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 600px){
   .auth-card { padding:1rem .95rem 1.15rem; }
   .auth-header h1 { font-size:1.45rem; }
   .auth-tab { font-size:.8rem; }
   .auth-field input { font-size:.85rem; }
   button.btn.btn-primary { width:100%; }
+  
+  .forgot-password-success {
+    padding: 1rem 0;
+  }
+  
+  .forgot-password-success .success-icon {
+    font-size: 2.5rem;
+  }
+  
+  .forgot-password-success h2 {
+    font-size: 1.1rem;
+  }
 }

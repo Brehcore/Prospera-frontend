@@ -2,8 +2,9 @@
   <div class="container auth-container">
     <div class="auth-card">
       <header class="auth-header">
-  <h1>Bem-vindo</h1>
-  <p class="intro-sub">Acesse ou crie sua conta.</p>
+        <h1>Bem-vindo</h1>
+        <p class="intro-sub" *ngIf="activeTab !== 'forgot-password'">Acesse ou crie sua conta.</p>
+        <p class="intro-sub" *ngIf="activeTab === 'forgot-password'">Informe o e-mail da sua conta para receber um link de recuperação.</p>
       </header>
 
       <div class="auth-tabs" role="tablist">
@@ -27,6 +28,16 @@
         >
           Criar conta
         </button>
+        <button
+          type="button"
+          class="auth-tab"
+          [class.active]="activeTab === 'forgot-password'"
+          role="tab"
+          [attr.aria-selected]="activeTab === 'forgot-password'"
+          (click)="selectTab('forgot-password')"
+        >
+          Recuperar
+        </button>
       </div>
 
       <div class="auth-messages" *ngIf="errorMessage || successMessage">
@@ -34,6 +45,7 @@
         <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
       </div>
 
+      <!-- FORM: Login -->
       <form
         *ngIf="activeTab === 'login'"
         [formGroup]="loginForm"
@@ -57,11 +69,18 @@
           </small>
         </label>
 
+        <div class="auth-field-helper">
+          <button type="button" class="btn-forgot-password" (click)="selectTab('forgot-password')">
+            <i class="fas fa-key"></i> Esqueci minha senha
+          </button>
+        </div>
+
         <button class="btn btn-primary" type="submit" [disabled]="isLoading">
           {{ isLoading ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>
 
+      <!-- FORM: Register -->
       <form
         *ngIf="activeTab === 'register'"
         [formGroup]="registerForm"
@@ -89,6 +108,51 @@
           {{ isLoading ? 'Criando conta…' : 'Cadastrar' }}
         </button>
       </form>
+
+      <!-- FORM: Forgot Password -->
+      <div *ngIf="activeTab === 'forgot-password'">
+        <form
+          *ngIf="!forgotPasswordSuccess"
+          [formGroup]="forgotPasswordForm"
+          (ngSubmit)="submitForgotPassword()"
+          class="auth-form"
+          aria-label="Formulário de recuperação de senha"
+        >
+          <label class="auth-field">
+            <span>E-mail</span>
+            <input
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="Digite seu e-mail"
+              required
+            />
+            <small
+              class="field-error"
+              *ngIf="forgotPasswordForm.get('email')?.invalid && forgotPasswordForm.get('email')?.touched"
+            >
+              Informe um e-mail válido.
+            </small>
+          </label>
+
+          <button class="btn btn-primary" type="submit" [disabled]="isLoading">
+            <span *ngIf="isLoading" class="spinner"></span>
+            {{ isLoading ? 'Enviando…' : 'Enviar Link de Recuperação' }}
+          </button>
+        </form>
+
+        <div class="forgot-password-success" *ngIf="forgotPasswordSuccess">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h2>Link enviado!</h2>
+          <p>{{ successMessage }}</p>
+          <button type="button" class="btn btn-secondary" (click)="resetForgotPasswordForm()">
+            Tentar com outro e-mail
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </section>
+

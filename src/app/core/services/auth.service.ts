@@ -104,6 +104,14 @@ export class AuthService implements OnDestroy {
     this.router.navigate(['/']);
   }
 
+  forgotPassword(payload: { email: string }): Observable<void> {
+    return this.api.post<void>('/auth/forgot-password', payload);
+  }
+
+  resetPassword(payload: { token: string; newPassword: string }): Observable<void> {
+    return this.api.patch<void>('/auth/reset-password', payload);
+  }
+
   hasRole(role: string): boolean {
     const normalized = this.normalizeRole(role);
     if (!normalized) {
@@ -150,13 +158,39 @@ export class AuthService implements OnDestroy {
       tap(enriched => {
         this.userSubject.next(enriched);
         this.syncRoleCaches(enriched);
+      }),
+      catchError(error => {
+        // Extrair mensagem de erro do backend
+        let errorMessage = 'Não foi possível atualizar o perfil.';
+        
+        if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.error?.error) {
+          errorMessage = error.error.error;
+        } else if (typeof error?.error === 'string') {
+          errorMessage = error.error;
+        }
+        
+        // Tratar erros específicos
+        if (errorMessage.includes('Duplicate entry') || errorMessage.includes('cpf')) {
+          errorMessage = 'Este CPF já está cadastrado no sistema.';
+        }
+        
+        return throwError(() => ({ message: errorMessage, status: error?.status }));
       })
     );
   }
 
-  updatePassword(newPassword: string, currentPassword?: string): Observable<void> {
-    const payload = currentPassword ? { oldPassword: currentPassword, password: newPassword } : { password: newPassword };
-    return this.api.patch<void>('/profile/password', payload);
+  updatePassword(newPassword: string, currentPassword?: string, confirmationPassword?: string): Observable<void> {
+    if (!currentPassword) {
+      return throwError(() => new Error('Senha atual é obrigatória'));
+    }
+    const payload = { 
+      currentPassword: currentPassword, 
+      newPassword: newPassword,
+      confirmationPassword: confirmationPassword
+    };
+    return this.api.post<void>('/auth/change-password', payload);
   }
 
   isAuthenticated(): boolean {

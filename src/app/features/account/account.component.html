@@ -25,7 +25,12 @@
             <div *ngSwitchCase="'dados'" class="grid">
               <article class="card primary">
                 <header>
-                  <h2>Dados principais</h2>
+                  <h2>
+                    Dados principais
+                    <span class="info-icon" *ngIf="isProfileComplete" title="Por questões de segurança, dados sensíveis como CPF, Nome, Data de nascimento e Telefone só podem ser alterados entrando em contato com nossa Central de Atendimento.">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h2>
                   <span class="status" [class.status-warning]="!isProfileComplete">
                     {{ isProfileComplete ? 'Completo' : 'Incompleto' }}
                   </span>
@@ -53,7 +58,7 @@
                   </div>
                 </dl>
                 <footer>
-                  <button type="button" class="btn btn-link" (click)="toggleProfileEdit()">
+                  <button type="button" class="btn btn-link" (click)="toggleProfileEdit()" *ngIf="!isProfileComplete">
                     <i class="fas fa-edit" aria-hidden="true"></i>
                     {{ isEditingProfile ? 'Cancelar edição' : 'Editar dados' }}
                   </button>
@@ -98,6 +103,19 @@
                   </div>
                 </form>
               </article>
+
+              <article class="card" *ngIf="isProfileComplete">
+                <header>
+                  <h2>Alterar E-mail</h2>
+                </header>
+                <form class="form-grid">
+                  <label>
+                    <span>E-mail</span>
+                    <input type="email" [value]="displayEmail" disabled placeholder="Seu e-mail atual" />
+                    <small>Entre em contato com nossa central de atendimento para alterar seu e-mail.</small>
+                  </label>
+                </form>
+              </article>
             </div>
 
             <article *ngSwitchCase="'payments'" class="card stretch">
@@ -130,27 +148,70 @@
 
             <article *ngSwitchCase="'password'" class="card stretch">
               <header>
-                <h2>Trocar senha</h2>
-                <p>Garanta que sua senha seja forte e atualizada regularmente.</p>
+                <h2>Trocar Senha</h2>
+                <p>Altere sua senha para manter sua conta segura. Garanta que seja forte e única.</p>
               </header>
               <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="form-grid">
                 <label>
-                  <span>Senha atual</span>
-                  <input type="password" formControlName="currentPassword" placeholder="Digite sua senha atual" />
-                </label>
-                <label>
-                  <span>Nova senha</span>
-                  <input type="password" formControlName="newPassword" placeholder="Nova senha (mínimo de 6 caracteres)" />
-                  <small class="field-error" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
-                    Informe uma senha com pelo menos 6 caracteres.
+                  <span>Senha Atual *</span>
+                  <input 
+                    type="password" 
+                    formControlName="currentPassword" 
+                    placeholder="Digite sua senha atual" 
+                    required 
+                  />
+                  <small class="field-error" *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+                    A senha atual é obrigatória.
                   </small>
                 </label>
+
+                <label>
+                  <span>Nova Senha *</span>
+                  <input 
+                    type="password" 
+                    formControlName="newPassword" 
+                    placeholder="Mínimo de 8 caracteres" 
+                    required 
+                  />
+                  <small class="field-error" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+                    <span *ngIf="passwordForm.get('newPassword')?.hasError('required')">A nova senha é obrigatória.</span>
+                    <span *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">A senha deve ter no mínimo 8 caracteres.</span>
+                  </small>
+                </label>
+
+                <label>
+                  <span>Confirmar Nova Senha *</span>
+                  <input 
+                    type="password" 
+                    formControlName="confirmPassword" 
+                    placeholder="Repita a nova senha" 
+                    required 
+                  />
+                  <small class="field-error" *ngIf="getPasswordMatchError()">
+                    As senhas não correspondem.
+                  </small>
+                  <small class="field-error" *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched && !getPasswordMatchError()">
+                    Confirme a nova senha.
+                  </small>
+                </label>
+
                 <div class="form-actions">
-                  <button class="btn btn-primary" type="submit">Atualizar senha</button>
+                  <button 
+                    class="btn btn-primary" 
+                    type="submit" 
+                    [disabled]="isSaving || passwordForm.invalid"
+                  >
+                    {{ isSaving ? 'Atualizando…' : 'Atualizar Senha' }}
+                  </button>
                 </div>
+
                 <div class="form-messages">
-                  <p class="success" *ngIf="passwordSuccessMessage">{{ passwordSuccessMessage }}</p>
-                  <p class="error" *ngIf="passwordErrorMessage">{{ passwordErrorMessage }}</p>
+                  <p class="success" *ngIf="passwordSuccessMessage">
+                    <i class="fas fa-check-circle"></i> {{ passwordSuccessMessage }}
+                  </p>
+                  <p class="error" *ngIf="passwordErrorMessage">
+                    <i class="fas fa-exclamation-circle"></i> {{ passwordErrorMessage }}
+                  </p>
                 </div>
               </form>
             </article>
