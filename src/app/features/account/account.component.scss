@@ -1348,8 +1348,123 @@
 .modal .btn-primary { min-width: 160px; }
 .modal .info { color: var(--gray-medium); font-size: 0.9rem; }
 
+// Email change flow styles
+.email-verification-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.verification-message {
+  padding: 1rem;
+  background: rgba(34, 139, 34, 0.05);
+  border-left: 4px solid var(--verde-escuro);
+  border-radius: var(--border-radius-md);
+
+  p {
+    margin: 0;
+    color: var(--verde-escuro);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.verification-support {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-light);
+  text-align: center;
+
+  p {
+    margin: 0 0 0.5rem 0;
+    color: var(--gray-medium);
+    font-size: 0.85rem;
+  }
+
+  .btn-link {
+    font-size: 0.85rem;
+    color: var(--verde-escuro);
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+      text-decoration: underline;
+      opacity: 0.8;
+    }
+  }
+}
+
+.form-messages {
+  margin-top: 1rem;
+
+  p {
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: var(--border-radius-md);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &.success {
+      background: rgba(34, 139, 34, 0.1);
+      color: var(--verde-escuro);
+      border-left: 4px solid var(--verde-escuro);
+    }
+
+    &.error {
+      background: rgba(255, 107, 107, 0.1);
+      color: var(--coral);
+      border-left: 4px solid var(--coral);
+    }
+  }
+}
+
+input[inputmode="numeric"] {
+  letter-spacing: 0.25rem;
+  font-size: 1.2rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 560px) {
   .modal { padding: 1rem; }
   .modal .btn-primary { width: 100%; }
   .modal .form-actions { flex-direction: column-reverse; }
+
+  .verification-support {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+
+    p {
+      font-size: 0.8rem;
+    }
+  }
+
+  input[inputmode="numeric"] {
+    font-size: 1rem;
+  }
 }
+

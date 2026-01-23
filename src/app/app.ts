@@ -134,9 +134,11 @@ export class App {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      // Esconder footer apenas na rota /conteudo/visualizar/:id
-      const isEbookViewer = /^\/conteudo\/visualizar\//.test(event.urlAfterRedirects);
-      this.showFooter.set(!isEbookViewer);
+      // Esconder footer nas rotas de visualização de aulas (student player):
+      // - /conteudo/visualizar/:id (legacy/content-view)
+      // - /treinamento/:id (student training-detail)
+      const isLessonViewer = /^\/conteudo\/visualizar\//.test(event.urlAfterRedirects) || /^\/treinamento\//.test(event.urlAfterRedirects);
+      this.showFooter.set(!isLessonViewer);
     });
   }
 

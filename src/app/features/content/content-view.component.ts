@@ -26,6 +26,12 @@ import { PdfSecureViewerComponent } from './pdf-secure-viewer.component';
           <span *ngIf="t.entityType === 'RECORDED_COURSE'">🎥</span>
           {{ t.title }}
         </h1>
+        <div>
+          <button *ngIf="t.entityType === 'EBOOK'" class="fullscreen-btn" (click)="toggleFullscreen()">
+            <span *ngIf="!isFullscreen()">⛶ Ver em Tela Cheia</span>
+            <span *ngIf="isFullscreen()">✕ Sair</span>
+          </button>
+        </div>
       </header>
 
       <!-- Container principal: Player + Sidebar -->
@@ -66,23 +72,33 @@ import { PdfSecureViewerComponent } from './pdf-secure-viewer.component';
 
           <!-- PDF viewer para EBOOK -->
           <section *ngIf="t.entityType === 'EBOOK'">
-            <div *ngIf="rawPdfUrl; else noPdf">
-              <app-pdf-secure-viewer 
-                [pdfUrl]="rawPdfUrl" 
-                [initialPage]="currentPage()" 
-                [trainingId]="trainingId()"
-                [onPageChange]="onPageChange.bind(this)"
-                style="height: 600px; display: block;"></app-pdf-secure-viewer>
+            <div id="admin-ebook-container" style="position:relative;">
+              <div *ngIf="rawPdfUrl; else noPdf">
+                <app-pdf-secure-viewer #pdfViewer
+                  [pdfUrl]="rawPdfUrl"
+                  [initialPage]="currentPage()"
+                  [trainingId]="trainingId()"
+                  [onPageChange]="onPageChange.bind(this)"
+                  style="height: 600px; display: block;"></app-pdf-secure-viewer>
+
+                <div class="ebook-fullscreen-controls" *ngIf="isFullscreen()">
+                  <button class="fs-nav" *ngIf="currentPage() > 1" (click)="pdfPrev()">Anterior</button>
+                  <div class="fs-spacer"></div>
+                  <button class="fs-nav" *ngIf="currentPage() < numPages()" (click)="pdfNext()">Próxima</button>
+                </div>
+              </div>
+              <ng-template #noPdf>
+                <div class="empty">PDF não disponível para este conteúdo.</div>
+              </ng-template>
             </div>
-            <ng-template #noPdf>
-              <div class="empty">PDF não disponível para este conteúdo.</div>
-            </ng-template>
           </section>
 
           <!-- Controles de navegação de aulas -->
-          <div class="lesson-controls" *ngIf="currentLesson() as lesson">
-            <button class="btn btn--ghost" (click)="previousLesson(lesson)" *ngIf="training()?.entityType === 'EBOOK'">← Anterior</button>
-          </div>
+          <ng-container *ngIf="training()?.entityType === 'EBOOK'">
+            <div class="lesson-controls" *ngIf="currentLesson() as lesson">
+              <button class="btn btn--ghost" (click)="previousLesson(lesson)">← Anterior</button>
+            </div>
+          </ng-container>
         </div>
 
         <!-- Sidebar com lista de aulas -->
@@ -266,6 +282,44 @@ import { PdfSecureViewerComponent } from './pdf-secure-viewer.component';
       background: #218838;
     }
 
+    .fullscreen-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      background: linear-gradient(180deg,#fff,#f3f6fa);
+      border: 1px solid #d0d7e5;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .ebook-fullscreen-controls {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      pointer-events: none;
+    }
+
+    .ebook-fullscreen-controls .fs-nav {
+      pointer-events: auto;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ebook-fullscreen-controls .fs-nav:hover { background: rgba(0,0,0,0.75); transform: translateY(-1px); }
+
+    .ebook-fullscreen-controls .fs-spacer { flex: 1; }
+
     .lessons-sidebar {
       width: 280px;
       background: white;
@@ -439,6 +493,7 @@ export class ContentViewComponent implements OnInit {
   training = signal<any | null>(null);
   trainingId = signal<string | null>(null);
   currentPage = signal<number>(1);
+  numPages = signal<number>(0);
   currentLesson = signal<any | null>(null);
   watchedLessons = signal<Set<string>>(new Set()); // IDs de vídeos já assistidos
   loading = signal<boolean>(true);
@@ -450,6 +505,7 @@ export class ContentViewComponent implements OnInit {
   private blobUrl: string | null = null;
   @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement> | undefined;
   @ViewChild('youtubePlayer') youtubePlayer: ElementRef<HTMLDivElement> | undefined;
+  @ViewChild('pdfViewer') pdfViewer?: PdfSecureViewerComponent;
   private youtubePlayer_instance: any = null; // Instância do YT.Player
   private ytApiLoaded = false; // Flag para controlar se a API foi carregada
 
@@ -1067,17 +1123,6 @@ export class ContentViewComponent implements OnInit {
     return isLast;
   }
 
-  toggleFullscreen(): void {
-    this.isFullscreen.update(current => !current);
-    
-    // Aplicar fullscreen do navegador se disponível
-    if (!this.isFullscreen()) {
-      // Sair do fullscreen
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    }
-  }
 
   /**
    * Carrega o progresso de leitura do ebook do servidor
@@ -1101,10 +1146,11 @@ export class ContentViewComponent implements OnInit {
   /**
    * Callback chamado quando o usuário muda de página no PDF
    */
-  onPageChange(pageNum: number): void {
+  onPageChange(pageNum: number, totalPages?: number): void {
     try { console.debug('[ContentView] page changed to', pageNum); } catch {}
     this.currentPage.set(pageNum);
-    
+    if (typeof totalPages === 'number') this.numPages.set(totalPages);
+
     // Salvar progresso no servidor
     const id = this.trainingId();
     if (id) {
@@ -1117,5 +1163,30 @@ export class ContentViewComponent implements OnInit {
         }
       });
     }
+  }
+
+  toggleFullscreen(): void {
+    const container = document.getElementById('admin-ebook-container');
+    if (!container) return;
+    const isNow = document.fullscreenElement === container;
+    if (!isNow) {
+      container.requestFullscreen?.().then(() => this.isFullscreen.set(true)).catch(() => {});
+    } else {
+      if (document.fullscreenElement) document.exitFullscreen?.().then(() => this.isFullscreen.set(false)).catch(() => {});
+    }
+  }
+
+  pdfPrev(): void {
+    try {
+      const comp = this.pdfViewer as any;
+      if (comp && typeof comp.previousPage === 'function') comp.previousPage();
+    } catch {}
+  }
+
+  pdfNext(): void {
+    try {
+      const comp = this.pdfViewer as any;
+      if (comp && typeof comp.nextPage === 'function') comp.nextPage();
+    } catch {}
   }
 }

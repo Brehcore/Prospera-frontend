@@ -60,6 +60,12 @@ export const routes: Routes = [
 		data: { title: 'Visualizar Conteúdo' }
 	},
 	{
+		path: 'treinamento/:id',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/trainings/training-detail.component').then(m => m.TrainingDetailComponent),
+		data: { title: 'Detalhe Treinamento' }
+	},
+	{
 		path: 'admin/conteudo/:id',
 		canActivate: [authGuard, adminGuard],
 		loadComponent: () => import('./features/admin/admin-training-detail.component').then(m => m.AdminTrainingDetailComponent),

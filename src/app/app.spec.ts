@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { App } from './app';
@@ -23,7 +24,7 @@ class AuthServiceStub {
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App, RouterTestingModule],
+      imports: [App, RouterTestingModule, HttpClientTestingModule],
       providers: [{ provide: AuthService, useClass: AuthServiceStub }]
     }).compileComponents();
   });

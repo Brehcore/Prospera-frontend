@@ -36,11 +36,13 @@
               [attr.aria-expanded]="isMenuOpen()"
               aria-haspopup="true"
               aria-label="Abrir menu da conta">
-              <svg class="icon-user-outline" viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 19c0-3.3 3.1-6 8-6s8 2.7 8 6" />
-              </svg>
-              <span>{{ userLabel || 'Minha conta' }}</span>
+              <div class="user-avatar">
+                <svg class="icon-user-outline" viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 19c0-3.3 3.1-6 8-6s8 2.7 8 6" />
+                </svg>
+              </div>
+              <i class="fas fa-chevron-down dropdown-arrow" aria-hidden="true"></i>
             </button>
 
             <!-- Dropdown Menu -->
@@ -51,7 +53,6 @@
               aria-label="Menu da conta">
               <div class="dropdown-user-info">
                 <p class="user-name">{{ userLabel }}</p>
-                <p class="user-email">{{ userEmail }}</p>
                 <span class="profile-status" *ngIf="isProfileComplete">
                   <i class="fas fa-check-circle"></i>
                   Perfil Completo

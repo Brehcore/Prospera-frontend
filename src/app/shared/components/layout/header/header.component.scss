@@ -64,6 +64,51 @@
 .btn-icon:hover .icon-user-outline, .btn-icon:focus-visible .icon-user-outline { transform:scale(1.12); opacity:1; }
 .btn-icon:active .icon-user-outline { transform:scale(.92); }
 
+.user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--white);
+  border: 2px solid var(--gray-light);
+  transition: all 0.2s ease;
+}
+
+.user-avatar .icon-user-outline {
+  width: 20px;
+  height: 20px;
+  stroke: var(--gray-dark);
+}
+
+.account-menu-trigger:hover .user-avatar,
+.account-menu-trigger:focus-visible .user-avatar {
+  border-color: var(--verde-escuro);
+  background-color: rgba(79, 168, 108, 0.05);
+}
+
+.account-menu-trigger:hover .user-avatar .icon-user-outline,
+.account-menu-trigger:focus-visible .user-avatar .icon-user-outline {
+  stroke: var(--verde-escuro);
+}
+
+.dropdown-arrow {
+  font-size: 0.75rem;
+  color: var(--gray-medium);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.account-menu-trigger:hover .dropdown-arrow,
+.account-menu-trigger:focus-visible .dropdown-arrow {
+  color: var(--verde-escuro);
+}
+
+.account-menu-trigger[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
+  color: var(--verde-escuro);
+}
+
 .account-actions {
   display: flex;
   align-items: center;
@@ -116,14 +161,8 @@
 .user-name {
   font-weight: 700;
   font-size: 0.95rem;
-  margin: 0 0 0.25rem 0;
-  color: var(--gray-dark);
-}
-
-.user-email {
-  font-size: 0.85rem;
-  color: var(--gray-medium);
   margin: 0 0 0.5rem 0;
+  color: var(--gray-dark);
 }
 
 .profile-status {

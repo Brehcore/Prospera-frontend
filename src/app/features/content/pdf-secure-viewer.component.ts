@@ -157,7 +157,7 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   @Input() pdfUrl: string | null = null;
   @Input() initialPage: number = 1; // Página inicial para restaurar progresso
   @Input() trainingId: string | null = null; // ID do treinamento para salvar progresso
-  @Input() onPageChange: ((page: number) => void) | null = null; // Callback quando página muda
+  @Input() onPageChange: ((page: number, numPages?: number) => void) | null = null; // Callback quando página muda
 
   private readonly cdr = inject(ChangeDetectorRef);
   private canvas: HTMLCanvasElement | null = null;
@@ -238,9 +238,9 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
       }).promise
         .then(() => {
           this.pageNum = pageNum;
-          // Chamar callback quando página muda
+          // Chamar callback quando página muda (inclui total de páginas)
           if (this.onPageChange) {
-            this.onPageChange(pageNum);
+            this.onPageChange(pageNum, this.numPages);
           }
           this.cdr.markForCheck();
         })

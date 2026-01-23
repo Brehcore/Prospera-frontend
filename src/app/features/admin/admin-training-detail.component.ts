@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PublicationStatusPipe } from '../../core/pipes/publication-status.pipe';
+import { PdfSecureViewerComponent } from '../content/pdf-secure-viewer.component';
 
 @Component({
   selector: 'app-admin-training-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, PublicationStatusPipe],
+  imports: [CommonModule, RouterModule, PublicationStatusPipe, PdfSecureViewerComponent],
   template: `
   <div class="training-detail-page" *ngIf="isSystemAdmin(); else noAccess" (click)="closeFilePickers()">
     <div class="header-row" *ngIf="training() as t">
@@ -145,9 +146,27 @@ import { PublicationStatusPipe } from '../../core/pipes/publication-status.pipe'
           <div class="kv-item"><span class="k">Upload</span><span class="v">{{ed.fileUploadedAt | date:'short'}}</span></div>
         </div>
         <div class="ebook-actions" *ngIf="trainingHasPdf(t)">
-          <a *ngIf="buildEbookFileUrl(extractPdfFileName(t)) as pdfUrl" class="btn btn--ghost btn-xs" [href]="pdfUrl" target="_blank" rel="noopener">Abrir PDF</a>
+            <a *ngIf="buildEbookFileUrl(extractPdfFileName(t)) as pdfUrl" class="btn btn--ghost btn-xs" [href]="pdfUrl" target="_blank" rel="noopener">Abrir PDF</a>
+            <button *ngIf="buildEbookFileUrl(extractPdfFileName(t)) as pdfUrl" class="btn btn--outline btn-xs" (click)="openAdminViewer(pdfUrl)">{{ showAdminViewer() ? 'Fechar Visualizador' : 'Ver Inline' }}</button>
         </div>
       </section>
+        <!-- Inline admin viewer -->
+        <section *ngIf="showAdminViewer() && adminPdfUrl" class="card" style="padding:0;">
+          <div id="admin-inline-ebook" style="position:relative; height:640px;">
+            <app-pdf-secure-viewer
+              [pdfUrl]="adminPdfUrl"
+              [initialPage]="adminCurrentPage()"
+              [onPageChange]="adminOnPageChange"
+              style="height:100%; display:block;">
+            </app-pdf-secure-viewer>
+
+            <div class="ebook-fullscreen-controls" *ngIf="adminIsFullscreen()">
+              <button class="fs-nav" *ngIf="adminCurrentPage() > 1" (click)="$any(this).pdfPrev && $any(this).pdfPrev()">Anterior</button>
+              <div class="fs-spacer"></div>
+              <button class="fs-nav" *ngIf="adminCurrentPage() < adminNumPages()" (click)="$any(this).pdfNext && $any(this).pdfNext()">Próxima</button>
+            </div>
+          </div>
+        </section>
       <section class="card">
         <h2 class="card-title">Setores Vinculados</h2>
 
@@ -250,6 +269,12 @@ import { PublicationStatusPipe } from '../../core/pipes/publication-status.pipe'
     .cards { grid-template-columns: 1fr; }
     .meta-card { grid-column:1 / -1; }
     .modules-column { max-height: none; overflow: visible; }
+    /* Inline admin viewer adjustments */
+    #admin-inline-ebook { display:flex; flex-direction:column; overflow:hidden; }
+    #admin-inline-ebook app-pdf-secure-viewer { flex:1; min-height:0; }
+    .ebook-fullscreen-controls { position:absolute; bottom:12px; left:12px; right:12px; display:flex; gap:12px; align-items:center; pointer-events:auto; }
+    .fs-nav { background:rgba(0,0,0,0.6); color:#fff; border:none; padding:.45rem .7rem; border-radius:8px; cursor:pointer; }
+    .fs-spacer { flex:1; }
   `]
 })
 export class AdminTrainingDetailComponent {
@@ -336,6 +361,25 @@ export class AdminTrainingDetailComponent {
   trainingHasPdf(t: any) { return this.admin.trainingHasPdf(t); }
   extractPdfFileName(t: any) { return this.admin.extractPdfFileName(t); }
   buildEbookFileUrl(fileName: string) { return this.admin.buildEbookFileUrl(fileName); }
+
+  // Admin inline ebook viewer state
+  showAdminViewer = signal<boolean>(false);
+  adminPdfUrl: string | null = null;
+  adminCurrentPage = signal<number>(1);
+  adminNumPages = signal<number>(0);
+  adminIsFullscreen = signal<boolean>(false);
+
+  // Callback function passed to PdfSecureViewer to update page/total
+  adminOnPageChange = (page: number, num?: number) => {
+    this.adminCurrentPage.set(page);
+    if (typeof num === 'number') this.adminNumPages.set(num);
+  };
+
+  openAdminViewer(pdfUrl: string | null) {
+    if (!pdfUrl) return;
+    this.adminPdfUrl = pdfUrl;
+    this.showAdminViewer.set(!this.showAdminViewer());
+  }
 
   // --- Módulos e Aulas (árvore para RECORDED_COURSE) ---
   showAddModule = signal<boolean>(false);

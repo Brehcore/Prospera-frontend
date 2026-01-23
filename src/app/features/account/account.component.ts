@@ -112,6 +112,25 @@ export class AccountComponent implements OnInit, OnDestroy {
   inviteSuccessMessage = '';
   inviteErrorMessage = '';
   isAddingMember = false;
+
+  // Email change flow
+  emailChangeForm = this.fb.nonNullable.group({
+    currentEmail: ['', [Validators.required, Validators.email]],
+    newEmail: ['', [Validators.required, Validators.email]]
+  }, { validators: this.emailsDifferentValidator() });
+
+  emailVerificationForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6), Validators.pattern(/^\d+$/)]]
+  });
+
+  emailChangeStep: 'request' | 'verification' = 'request'; // Controla qual etapa está sendo exibida
+  emailChangePending = false;
+  emailChangeError = '';
+  emailChangeSuccess = '';
+  emailChangeVerificationError = '';
+  emailChangeVerificationSuccess = '';
+  isSubmittingEmail = false;
+  isSubmittingCode = false;
   // import/report variables removed — feature deprecated in this UI
   companySubusers: CompanySubuser[] = [];
   // Organization members (from backend)
@@ -585,8 +604,25 @@ export class AccountComponent implements OnInit, OnDestroy {
     };
   }
 
+  emailsDifferentValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const currentEmail = control.get('currentEmail');
+      const newEmail = control.get('newEmail');
+
+      if (!currentEmail || !newEmail) {
+        return null;
+      }
+
+      return currentEmail.value !== newEmail.value ? null : { emailsSame: true };
+    };
+  }
+
   getPasswordMatchError(): boolean {
     return this.passwordForm.hasError('passwordMismatch') && this.passwordForm.touched;
+  }
+
+  getEmailsDifferentError(): boolean {
+    return this.emailChangeForm.hasError('emailsSame') && this.emailChangeForm.touched;
   }
 
   savePassword(): void {
@@ -624,6 +660,76 @@ export class AccountComponent implements OnInit, OnDestroy {
           }
         }
       });
+  }
+
+  initiateEmailChange(): void {
+    if (this.emailChangeForm.invalid) {
+      this.emailChangeForm.markAllAsTouched();
+      return;
+    }
+
+    const currentEmail = (this.emailChangeForm.get('currentEmail')?.value ?? '').trim();
+    const newEmail = (this.emailChangeForm.get('newEmail')?.value ?? '').trim();
+
+    this.emailChangeError = '';
+    this.emailChangeSuccess = '';
+    this.isSubmittingEmail = true;
+
+    this.authService.initiateEmailChange(currentEmail, newEmail)
+      .pipe(finalize(() => { this.isSubmittingEmail = false; }))
+      .subscribe({
+        next: () => {
+          this.emailChangeSuccess = 'Enviamos um código de verificação para seu e-mail antigo';
+          this.emailChangeStep = 'verification';
+          this.emailVerificationForm.reset();
+        },
+        error: (error) => {
+          this.emailChangeError = error?.error?.message || 'Não foi possível enviar o código. Verifique os dados e tente novamente.';
+        }
+      });
+  }
+
+  confirmEmailChange(): void {
+    if (this.emailVerificationForm.invalid) {
+      this.emailVerificationForm.markAllAsTouched();
+      return;
+    }
+
+    const code = (this.emailVerificationForm.get('code')?.value ?? '').trim();
+
+    this.emailChangeVerificationError = '';
+    this.emailChangeVerificationSuccess = '';
+    this.isSubmittingCode = true;
+
+    this.authService.confirmEmailChange(code)
+      .pipe(finalize(() => { this.isSubmittingCode = false; }))
+      .subscribe({
+        next: () => {
+          this.emailChangeVerificationSuccess = 'E-mail alterado com sucesso! Faça login novamente.';
+          // Aguardar um pouco antes de fazer logout
+          setTimeout(() => {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }, 2000);
+        },
+        error: (error) => {
+          if (error?.error?.message?.includes('expirado') || error?.error?.message?.includes('invalid')) {
+            this.emailChangeVerificationError = 'O código é inválido ou expirou. Tente novamente.';
+          } else {
+            this.emailChangeVerificationError = error?.error?.message || 'Não foi possível confirmar o código. Tente novamente.';
+          }
+        }
+      });
+  }
+
+  cancelEmailChange(): void {
+    this.emailChangeStep = 'request';
+    this.emailChangeForm.reset();
+    this.emailVerificationForm.reset();
+    this.emailChangeError = '';
+    this.emailChangeSuccess = '';
+    this.emailChangeVerificationError = '';
+    this.emailChangeVerificationSuccess = '';
   }
 
   inviteSubuser(): void {

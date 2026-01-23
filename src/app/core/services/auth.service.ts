@@ -193,6 +193,16 @@ export class AuthService implements OnDestroy {
     return this.api.post<void>('/auth/change-password', payload);
   }
 
+  initiateEmailChange(currentEmail: string, newEmail: string): Observable<void> {
+    const payload = { currentEmail, newEmail };
+    return this.api.post<void>('/auth/email/initiate-change', payload);
+  }
+
+  confirmEmailChange(code: string): Observable<void> {
+    const payload = { code };
+    return this.api.post<void>('/auth/email/confirm-change', payload);
+  }
+
   isAuthenticated(): boolean {
     return !!this.userSubject.value && !!this.getToken();
   }

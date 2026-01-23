@@ -108,13 +108,123 @@
                 <header>
                   <h2>Alterar E-mail</h2>
                 </header>
-                <form class="form-grid">
+                <form 
+                  [formGroup]="emailChangeForm" 
+                  (ngSubmit)="initiateEmailChange()" 
+                  class="form-grid"
+                  *ngIf="emailChangeStep === 'request'"
+                >
                   <label>
-                    <span>E-mail</span>
-                    <input type="email" [value]="displayEmail" disabled placeholder="Seu e-mail atual" />
-                    <small>Entre em contato com nossa central de atendimento para alterar seu e-mail.</small>
+                    <span>E-mail Atual *</span>
+                    <input 
+                      type="email" 
+                      formControlName="currentEmail" 
+                      placeholder="Digite seu e-mail atual para confirmar" 
+                      required
+                    />
+                    <small class="field-error" *ngIf="emailChangeForm.get('currentEmail')?.invalid && emailChangeForm.get('currentEmail')?.touched">
+                      <span *ngIf="emailChangeForm.get('currentEmail')?.hasError('required')">O e-mail atual é obrigatório.</span>
+                      <span *ngIf="emailChangeForm.get('currentEmail')?.hasError('email')">Informe um e-mail válido.</span>
+                    </small>
                   </label>
+
+                  <label>
+                    <span>Novo E-mail *</span>
+                    <input 
+                      type="email" 
+                      formControlName="newEmail" 
+                      placeholder="Digite seu novo e-mail" 
+                      required
+                    />
+                    <small class="field-error" *ngIf="emailChangeForm.get('newEmail')?.invalid && emailChangeForm.get('newEmail')?.touched">
+                      <span *ngIf="emailChangeForm.get('newEmail')?.hasError('required')">O novo e-mail é obrigatório.</span>
+                      <span *ngIf="emailChangeForm.get('newEmail')?.hasError('email')">Informe um e-mail válido.</span>
+                    </small>
+                    <small class="field-error" *ngIf="getEmailsDifferentError()">
+                      O novo e-mail deve ser diferente do e-mail atual.
+                    </small>
+                  </label>
+
+                  <div class="form-actions">
+                    <button 
+                      class="btn btn-primary" 
+                      type="submit" 
+                      [disabled]="isSubmittingEmail || emailChangeForm.invalid"
+                    >
+                      {{ isSubmittingEmail ? 'Enviando…' : 'Enviar código de verificação' }}
+                    </button>
+                  </div>
+
+                  <div class="form-messages">
+                    <p class="error" *ngIf="emailChangeError">
+                      <i class="fas fa-exclamation-circle"></i> {{ emailChangeError }}
+                    </p>
+                  </div>
                 </form>
+
+                <!-- Etapa 2: Verificação do código -->
+                <div *ngIf="emailChangeStep === 'verification'" class="email-verification-container">
+                  <div class="verification-message">
+                    <p class="success" *ngIf="emailChangeSuccess">
+                      <i class="fas fa-check-circle"></i> {{ emailChangeSuccess }}
+                    </p>
+                  </div>
+
+                  <form 
+                    [formGroup]="emailVerificationForm" 
+                    (ngSubmit)="confirmEmailChange()" 
+                    class="form-grid"
+                  >
+                    <label>
+                      <span>Código de Verificação *</span>
+                      <input 
+                        type="text" 
+                        formControlName="code" 
+                        placeholder="000000" 
+                        maxlength="6"
+                        inputmode="numeric"
+                        required
+                      />
+                      <small class="field-error" *ngIf="emailVerificationForm.get('code')?.invalid && emailVerificationForm.get('code')?.touched">
+                        <span *ngIf="emailVerificationForm.get('code')?.hasError('required')">O código é obrigatório.</span>
+                        <span *ngIf="emailVerificationForm.get('code')?.hasError('minlength') || emailVerificationForm.get('code')?.hasError('maxlength')">O código deve ter 6 dígitos.</span>
+                        <span *ngIf="emailVerificationForm.get('code')?.hasError('pattern')">O código deve conter apenas números.</span>
+                      </small>
+                    </label>
+
+                    <div class="form-actions">
+                      <button 
+                        class="btn btn-primary" 
+                        type="submit" 
+                        [disabled]="isSubmittingCode || emailVerificationForm.invalid"
+                      >
+                        {{ isSubmittingCode ? 'Confirmando…' : 'Confirmar' }}
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn btn-secondary" 
+                        (click)="cancelEmailChange()"
+                        [disabled]="isSubmittingCode"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+
+                    <div class="form-messages">
+                      <p class="success" *ngIf="emailChangeVerificationSuccess">
+                        <i class="fas fa-check-circle"></i> {{ emailChangeVerificationSuccess }}
+                      </p>
+                      <p class="error" *ngIf="emailChangeVerificationError">
+                        <i class="fas fa-exclamation-circle"></i> {{ emailChangeVerificationError }}
+                      </p>
+                    </div>
+
+                    <div class="verification-support">
+                      <p>Não tenho mais acesso a este e-mail?</p>
+                      <a href="mailto:suporte@prospera.com.br" class="btn btn-link">Contate nosso suporte</a>
+                    </div>
+                  </form>
+                </div>
               </article>
             </div>
 
