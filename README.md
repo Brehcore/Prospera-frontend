@@ -1,56 +1,197 @@
-# Frontend — Refatoração para Angular
+# Prospera Frontend
 
-Este diretório contém a versão refatorada do frontend da Prospera, migrado do antigo SPA baseado em HTML parciais e scripts para um aplicativo moderno em Angular (Angular CLI).
+Aplicação frontend moderna desenvolvida em **Angular 20** para a plataforma de treinamento Prospera. O projeto implementa uma arquitetura escalável com componentes standalone, lazy-loading de rotas e separação clara de responsabilidades.
 
-O objetivo da refatoração foi organizar o código em componentes e serviços, melhorar a manutenção, habilitar ferramentas de desenvolvimento (lint, testes, build) e facilitar deploys automatizados.
+## Sobre o Projeto
 
-## O que mudou
+Prospera é uma plataforma educacional que oferece:
+- 📚 Catálogo de cursos e treinamentos
+- 👥 Gerenciamento de contas e assinaturas
+- 🎓 Visualização de conteúdo educacional (suporte a PDF)
+- 🔐 Autenticação e autorização (com guards de rota)
+- ⚙️ Painel administrativo para gestão de conteúdo
+- 📅 Agenda de eventos e atividades
+- 💬 Sistema de suporte e FAQs
 
-- Migração do SPA estático (partials + scripts) para um projeto Angular estruturado em `src/angular/frontend/`.
-- Separação clara entre apresentação (componentes), lógica (serviços) e rotas (módulos lazy-loaded quando aplicável).
-- Artefatos e dependências (ex.: `node_modules/`, `dist/`, `.angular/`) são ignorados no Git. As regras de ignore estão em `src/angular/frontend/.gitignore`.
-
-## Executando localmente (desenvolvimento)
-
-Abra um PowerShell na pasta do frontend e execute:
+## Estrutura do Projeto
 
 ```
+src/
+├── app/
+│   ├── core/                 # Serviços, guards, interceptadores e utilitários
+│   │   ├── guards/          # auth.guard, admin.guard
+│   │   ├── interceptors/    # HTTP interceptors (autenticação)
+│   │   ├── models/          # Interfaces e tipos TypeScript
+│   │   ├── pipes/           # Custom pipes
+│   │   ├── services/        # Serviços de API e lógica de negócio
+│   │   └── utils/           # Utilitários (JWT, etc.)
+│   ├── features/            # Componentes de página (lazy-loaded)
+│   │   ├── home/           # Página inicial
+│   │   ├── catalog/        # Catálogo de cursos
+│   │   ├── trainings/      # Lista de treinamentos do usuário
+│   │   ├── account/        # Conta, assinatura e perfil
+│   │   ├── admin/          # Painel administrativo
+│   │   ├── content/        # Visualizador de conteúdo
+│   │   ├── plans/          # Planos e preços
+│   │   ├── auth/           # Modais de autenticação
+│   │   └── [outros]/       # About, Contact, FAQ, Support, etc.
+│   ├── shared/              # Componentes reutilizáveis
+│   │   ├── components/     # Componentes compartilhados
+│   │   ├── pipes/          # Pipes reutilizáveis
+│   │   └── styles/         # Estilos globais
+│   ├── app.ts              # Componente raiz
+│   ├── app.routes.ts       # Configuração de rotas
+│   └── app.config.ts       # Configuração da aplicação
+├── assets/                  # Imagens, documentos, worker scripts
+├── index.html              # Arquivo HTML raiz
+├── main.ts                 # Entry point
+└── styles.scss             # Estilos globais
+```
+
+## Stack Tecnológico
+
+- **Framework**: Angular 20.3.0
+- **Linguagem**: TypeScript 5.9.2
+- **Estilo**: SCSS
+- **Testes**: Karma + Jasmine
+- **Linting**: Configuração de lint do Angular CLI
+- **Formatting**: Prettier
+- **PDF Viewer**: pdfjs-dist 5.4.296
+- **Node**: 20.x
+
+## Serviços Principais
+
+| Serviço | Responsabilidade |
+|---------|-----------------|
+| `AuthService` | Autenticação, login, logout, JWT |
+| `ApiService` | Requisições HTTP com interceptadores |
+| `CatalogService` | Catálogo de cursos e produtos |
+| `TrainingService` | Treinamentos inscritos do usuário |
+| `SubscriptionService` | Gerenciamento de assinaturas |
+| `AdminService` | Operações administrativas |
+| `SupportService` | Suporte ao usuário |
+| `LessonService` | Aulas e conteúdo educacional |
+
+## Configuração e Instalação
+
+### Pré-requisitos
+
+- Node.js 20.x
+- npm ou yarn
+
+### Instalação
+
+```bash
+# Clonar repositório e instalar dependências
 npm ci
+
+# Ou com npm install para instalar versão mais recente
+npm install
+```
+
+## Desenvolvimento
+
+### Iniciar servidor de desenvolvimento
+
+```bash
 npm start
 ```
 
-Em seguida, abra `http://localhost:4200/` no navegador. O servidor de desenvolvimento do Angular fará hot-reload ao salvar alterações.
+Acesse `http://localhost:4200/` no navegador. O aplicativo fará hot-reload automaticamente ao salvar alterações.
 
-Se preferir usar o Angular CLI diretamente:
-
-```powershell
-npx ng serve
+Alternativa com Angular CLI:
+```bash
+ng serve
 ```
 
-### Gerar artefatos de produção
+### Build para produção
 
-```powershell
-npm run build -- --configuration production
+```bash
+npm run build
+```
+
+Saída otimizada será gerada em `dist/Prospera-frontend/`.
+
+### Watch mode (desenvolvimento contínuo)
+
+```bash
+npm run watch
 ```
 
 ## Testes
 
-- Unitários: `npm test` (Karma/Jasmine ou equivalente, conforme configuração do projeto).
-- E2E: `npm run e2e` (se houver configuração de teste E2E).
+### Testes Unitários
 
-## Boas práticas e recomendações
+```bash
+npm test
+```
 
-- Use componentes e serviços para separar responsabilidades.
-- Prefira lazy-loading de módulos para rotas volumosas.
-- Mantenha as regras de lint e formatação (ESLint / Prettier) ativas no CI.
+Executa testes com Karma e Jasmine. Monitora arquivos continuamente.
 
-## Acesso ao Projeto Online
+## Rotas Principais
 
-Você pode visualizar o projeto em tempo real através do link abaixo.
-Todas as atualizações feitas no repositório são refletidas automaticamente no deploy:
+| Rota | Autenticação | Descrição |
+|------|-------------|-----------|
+| `/` | Não | Página inicial |
+| `/catalog` | Não | Catálogo de cursos |
+| `/planos` | Não | Planos e preços |
+| `/conta` | Sim | Conta do usuário |
+| `/conta/assinatura` | Sim | Gerenciar assinatura |
+| `/trainings` | Sim | Meus treinamentos |
+| `/conteudo/visualizar/:id` | Sim | Visualizar aula |
+| `/admin` | Sim (Admin) | Painel administrativo |
 
-🔗 Prospera-frontend.vercel.app
+## Autenticação e Autorização
 
----
+- **Guards de Rota**: `authGuard` (autenticado), `adminGuard` (administrador)
+- **Interceptador HTTP**: Adiciona token JWT em requisições
+- **Utilitário JWT**: Decodificação e validação de tokens
+- **Token Storage**: Armazenado localmente no navegador
 
-Desenvolvido por: Brena Soares
+## Componentes Destacados
+
+- **Header & Footer**: Layout base com navegação
+- **Auth Modal**: Modais de login, registro e recuperação de senha
+- **Catalog Details Modal**: Prévia de cursos
+- **PDF Viewer**: Visualizador seguro de documentos PDF
+- **Admin Dashboard**: Interface de gerenciamento
+
+## Padrões e Boas Práticas
+
+✅ Componentes standalone (Angular 14+)
+✅ Lazy-loading de rotas para melhor performance
+✅ Serviços injetáveis com DI
+✅ RxJS para programação reativa
+✅ Separação clara entre camadas (apresentação, lógica, dados)
+✅ Tipagem forte com TypeScript
+✅ SCSS para estilos modularizados
+✅ Guards para proteção de rotas
+✅ Interceptadores para autenticação
+
+## Deploy
+
+A aplicação é automaticamente deployada no **Vercel** a cada push no repositório principal.
+
+**URL de produção**: [Prospera-frontend.vercel.app](https://prospera-frontend.vercel.app)
+
+## Scripts Disponíveis
+
+```json
+{
+  "start": "ng serve",
+  "build": "ng build --configuration production",
+  "watch": "ng build --watch --configuration development",
+  "test": "ng test"
+}
+```
+
+## Licença
+
+Este projeto é **proprietário e confidencial**. Todos os direitos reservados © 2026 Brena Bispo Soares.
+
+A cópia, modificação, distribuição ou qualquer uso não autorizado deste código é **estritamente proibido**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## Desenvolvido por
+
+**Brena Soares** - Analista e Desenvolvedora de Sistemas  
+[LinkedIn](https://www.linkedin.com/in/brenasoaress/)
