@@ -194,4 +194,4 @@ A cópia, modificação, distribuição ou qualquer uso não autorizado deste c�
 ## Desenvolvido por
 
 **Brena Soares** - Analista e Desenvolvedora de Sistemas  
-[LinkedIn](https://www.linkedin.com/in/brenasoaress/)
+[LinkedIn](https://www.linkedin.com/in/brenasoares/)
