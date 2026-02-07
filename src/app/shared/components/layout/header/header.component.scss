@@ -239,6 +239,25 @@
   .nav-actions {
     justify-content: center;
   }
+
+  /* Ensure account dropdown is not clipped on small screens: make it fixed and constrained */
+  .account-dropdown {
+    position: fixed;
+    right: 12px;
+    left: 12px;
+    top: 64px; /* below the header */
+    min-width: auto;
+    width: auto;
+    max-width: calc(100% - 24px);
+    z-index: 1400;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
+    animation: none; /* avoid slide animation clipping on mobile */
+  }
+
+  .account-menu-wrapper { overflow: visible; }
 }
 
 @media (max-width: 720px) {

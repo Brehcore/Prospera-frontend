@@ -56,19 +56,19 @@ export const routes: Routes = [
 	{
 		path: 'conteudo/visualizar/:id',
 		canActivate: [authGuard],
-		loadComponent: () => import('./features/content/content-view.component').then(m => m.ContentViewComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
 		data: { title: 'Visualizar Conteúdo' }
 	},
 	{
 		path: 'treinamento/:id',
 		canActivate: [authGuard],
-		loadComponent: () => import('./features/trainings/training-detail.component').then(m => m.TrainingDetailComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
 		data: { title: 'Detalhe Treinamento' }
 	},
 	{
 		path: 'admin/conteudo/:id',
 		canActivate: [authGuard, adminGuard],
-		loadComponent: () => import('./features/admin/admin-training-detail.component').then(m => m.AdminTrainingDetailComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
 		data: { title: 'Detalhe Conteúdo' }
 	},
 	{

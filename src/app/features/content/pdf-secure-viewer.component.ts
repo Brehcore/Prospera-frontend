@@ -17,23 +17,46 @@ import * as pdfjsLib from 'pdfjs-dist';
       <!-- Controles -->
       <div class="pdf-toolbar">
         <button class="btn btn-sm" (click)="previousPage()" [disabled]="pageNum <= 1">
-          ← Página anterior
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="btn-label">Página anterior</span>
         </button>
         <div class="page-info">
           Página <input type="number" [(ngModel)]="pageNum" min="1" [max]="numPages" 
             (change)="goToPage($event)" class="page-input"> de {{ numPages }}
         </div>
         <button class="btn btn-sm" (click)="nextPage()" [disabled]="pageNum >= numPages">
-          Próxima página →
+          <span class="btn-label">Próxima página</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
         <div class="spacer"></div>
-        <button class="btn btn-sm" (click)="zoomIn()" title="Aumentar zoom">🔍+</button>
-        <button class="btn btn-sm" (click)="zoomOut()" title="Diminuir zoom">🔍−</button>
-        <button class="btn btn-sm" (click)="resetZoom()" title="Zoom padrão">Reset</button>
+        <button class="btn btn-sm" (click)="zoomIn()" title="Aumentar zoom">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 14L20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="btn btn-sm" (click)="zoomOut()" title="Diminuir zoom">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 14L20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M7 10h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="btn btn-sm" (click)="resetZoom()" title="Zoom padrão">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 3v4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Canvas para renderização -->
-      <div class="pdf-canvas-wrapper" (contextmenu)="$event.preventDefault()">
+      <div class="pdf-canvas-wrapper" (contextmenu)="$event.preventDefault()" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd($event)">
         <canvas 
           #pdfCanvas 
           class="pdf-canvas"
@@ -72,16 +95,7 @@ import * as pdfjsLib from 'pdfjs-dist';
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .btn {
-      padding: 0.5rem 1rem;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background 0.2s;
-    }
+
 
     .btn:hover:not(:disabled) {
       background: #0056b3;
@@ -94,9 +108,18 @@ import * as pdfjsLib from 'pdfjs-dist';
     }
 
     .btn-sm {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
     }
+
+    .pdf-toolbar .btn svg {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      display: inline-block;
+    }
+
+    .pdf-toolbar .btn .btn-label { margin: 0 0.5rem; }
 
     .page-info {
       display: flex;
@@ -127,15 +150,8 @@ import * as pdfjsLib from 'pdfjs-dist';
       background: #e8e8e8;
       user-select: none;
       -webkit-user-select: none;
-    }
-
-    .pdf-canvas {
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      background: white;
-      user-select: none;
-      -webkit-user-select: none;
-      user-drag: none;
-      -webkit-user-drag: none;
+      /* Allow pinch to zoom and vertical pan gestures on modern browsers */
+      touch-action: pan-y pinch-zoom;
     }
 
     .loading, .error {
@@ -149,6 +165,101 @@ import * as pdfjsLib from 'pdfjs-dist';
     .error {
       color: #b91c1c;
       background: #fee;
+    }
+
+    /* Responsive design para tablets e mobile */
+    @media (max-width: 768px) {
+      .pdf-toolbar {
+        padding: 0.5rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .btn-sm {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+      }
+
+      .pdf-toolbar .btn-label {
+        display: none;
+      }
+
+      .pdf-toolbar .btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .page-input {
+        width: 40px;
+        padding: 0.3rem;
+        font-size: 0.75rem;
+      }
+
+      .page-info {
+        font-size: 0.75rem;
+        gap: 0.3rem;
+      }
+
+      .pdf-canvas-wrapper {
+        padding: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .pdf-toolbar {
+        padding: 0.4rem;
+        gap: 0.4rem;
+      }
+
+      .btn-sm {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.7rem;
+      }
+
+      .pdf-toolbar .btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .page-input {
+        width: 35px;
+        padding: 0.25rem;
+        font-size: 0.7rem;
+      }
+
+      .page-info {
+        font-size: 0.7rem;
+        gap: 0.25rem;
+      }
+
+      .pdf-canvas-wrapper {
+        padding: 0.5rem;
+      }
+
+      .spacer {
+        flex: 0.5;
+      }
+
+      /* Floating compact toolbar to avoid covering content on very small screens */
+      .pdf-toolbar {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 8px;
+        z-index: 60;
+        padding: 0.4rem;
+        background: rgba(255,255,255,0.95);
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        gap: 0.4rem;
+        align-items: center;
+      }
+
+      .pdf-canvas-wrapper {
+        padding-top: 56px; /* make room for the floating toolbar */
+      }
+
+      .spacer { display: none; }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -164,11 +275,18 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   private pdfDoc: any = null;
   private renderingPageNum = 0;
 
+  // Touch/pinch state
+  private touchInitialDistance: number | null = null;
+  private touchInitialZoom = 1.0;
+  private touchLastTap = 0;
+  private pinchRaf: number | null = null;
+  private initialZoom = 1.0; // Store calculated initial zoom
+
   pageNum = 1;
   numPages = 0;
   loading = false;
   error: string | null = null;
-  zoom = 1.0;
+  zoom = 1.0; // Will be overridden by calculateInitialZoom() in ngOnInit
 
   constructor() {
     // Configurar worker do PDF.js para usar o arquivo local do pdfjs-dist
@@ -184,7 +302,29 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
       this.error = 'URL do PDF não fornecida';
       return;
     }
+    // Calculate initial zoom based on screen size for better mobile/tablet experience
+    const calculatedZoom = this.calculateInitialZoom();
+    this.zoom = calculatedZoom;
+    this.initialZoom = calculatedZoom;
     this.loadPdf(this.pdfUrl);
+  }
+
+  private calculateInitialZoom(): number {
+    const width = window.innerWidth;
+    // Mobile: very small screens
+    if (width <= 375) {
+      return 0.55;
+    }
+    // Mobile: small screens
+    if (width <= 480) {
+      return 0.65;
+    }
+    // Tablet: medium screens
+    if (width <= 768) {
+      return 0.85;
+    }
+    // Desktop: full size
+    return 1.0;
   }
 
   ngOnDestroy(): void {
@@ -262,6 +402,62 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Touch handlers to enable pinch-to-zoom and double-tap to zoom
+  onTouchStart(e: TouchEvent): void {
+    try {
+      if (e.touches && e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        this.touchInitialDistance = Math.hypot(dx, dy);
+        this.touchInitialZoom = this.zoom;
+      }
+    } catch (err) { }
+  }
+
+  onTouchMove(e: TouchEvent): void {
+    try {
+      if (e.touches && e.touches.length === 2 && this.touchInitialDistance) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const scale = dist / this.touchInitialDistance;
+        let newZoom = this.touchInitialZoom * scale;
+        newZoom = Math.max(0.5, Math.min(3.0, newZoom));
+        this.zoom = newZoom;
+        if (this.pinchRaf) cancelAnimationFrame(this.pinchRaf);
+        this.pinchRaf = requestAnimationFrame(() => {
+          this.renderPage(this.pageNum);
+        });
+        // Prevent page from zooming (native) while handling gesture
+        e.preventDefault();
+      }
+    } catch (err) { }
+  }
+
+  onTouchEnd(e: TouchEvent): void {
+    try {
+      // Double-tap detection for quick zoom (within 300ms)
+      const now = Date.now();
+      if (e.changedTouches && e.changedTouches.length === 1) {
+        if (now - this.touchLastTap < 300) {
+          // double tap
+          if (this.zoom > 1.1) {
+            this.zoom = 1.0;
+          } else {
+            this.zoom = Math.min(2.0, this.zoom * 1.5);
+          }
+          this.renderPage(this.pageNum);
+        }
+        this.touchLastTap = now;
+      }
+
+      if (!e.touches || e.touches.length < 2) {
+        this.touchInitialDistance = null;
+        if (this.pinchRaf) { cancelAnimationFrame(this.pinchRaf); this.pinchRaf = null; }
+      }
+    } catch (err) { }
+  }
+
   goToPage(event: any): void {
     let page = parseInt(event?.target?.value || this.pageNum, 10);
     page = Math.max(1, Math.min(page, this.numPages));
@@ -279,7 +475,7 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   }
 
   resetZoom(): void {
-    this.zoom = 1.0;
+    this.zoom = this.initialZoom;
     this.renderPage(this.pageNum);
   }
 
