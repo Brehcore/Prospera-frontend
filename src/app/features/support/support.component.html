@@ -1,71 +1,169 @@
-<section class="page-header support-hero">
+<section class="support-hero">
   <div class="container">
-    <h1>Central de Suporte</h1>
-    <p>Conte com especialistas para manter a operação rodando sem interrupções.</p>
+    <div class="hero-content">
+      <h1>Central de Suporte</h1>
+      <p>Nossos especialistas estão aqui para garantir que sua operação funcione perfeitamente.</p>
+    </div>
   </div>
 </section>
 
 <section class="support-content">
   <div class="container">
+    <!-- Contact Channels -->
+    <div class="contact-channels">
+      <div *ngFor="let channel of contactChannels" class="channel-card">
+        <div class="channel-icon">
+          <i [class]="'fas ' + channel.icon"></i>
+        </div>
+        <h3>{{ channel.title }}</h3>
+        <p class="description">{{ channel.description }}</p>
+        <p class="value" [class.has-link]="!!channel.link">
+          <a *ngIf="channel.link" [href]="channel.link" target="_blank">{{ channel.value }}</a>
+          <span *ngIf="!channel.link">{{ channel.value }}</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Support Grid -->
     <div class="support-grid">
-      <div class="support-knowledge">
-        <h2>Base de conhecimento</h2>
-        <ul>
+      <!-- Knowledge Base -->
+      <div class="knowledge-section">
+        <div class="section-header">
+          <h2>
+            <i class="fas fa-book"></i>
+            Base de Conhecimento
+          </h2>
+          <p>Artigos e guias para ajudar você a aproveitar ao máximo a plataforma</p>
+        </div>
+        <ul class="knowledge-list">
           <li>
-            <h3>Primeiros passos</h3>
-            <p>Aprenda a configurar a conta da empresa, convidar membros e publicar trilhas em minutos.</p>
+            <div class="item-header">
+              <div class="item-icon">
+                <i class="fas fa-rocket"></i>
+              </div>
+              <div>
+                <h3>Primeiros passos</h3>
+                <p>Aprenda a configurar a conta da empresa, convidar membros e publicar trilhas em minutos.</p>
+              </div>
+            </div>
           </li>
           <li>
-            <h3>Catálogo inteligente</h3>
-            <p>Descubra como selecionar conteúdos por setor, acompanhar consumo e emitir certificados.</p>
+            <div class="item-header">
+              <div class="item-icon">
+                <i class="fas fa-filter"></i>
+              </div>
+              <div>
+                <h3>Catálogo inteligente</h3>
+                <p>Descubra como selecionar conteúdos por setor, acompanhar consumo e emitir certificados.</p>
+              </div>
+            </div>
           </li>
           <li>
-            <h3>Monitoramento e indicadores</h3>
-            <p>Defina metas, acompanhe engajamento e gere relatórios executivos automáticos.</p>
+            <div class="item-header">
+              <div class="item-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div>
+                <h3>Monitoramento e indicadores</h3>
+                <p>Defina metas, acompanhe engajamento e gere relatórios executivos automáticos.</p>
+              </div>
+            </div>
+          </li>
+          <li>
+            <div class="item-header">
+              <div class="item-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div>
+                <h3>Gestão de equipes</h3>
+                <p>Organize usuários, atribua cursos e acompanhe o progresso em tempo real.</p>
+              </div>
+            </div>
           </li>
         </ul>
-        <a class="btn btn-link" routerLink="/faq">Ver perguntas frequentes</a>
+        <a class="btn btn-outline" routerLink="/faq">
+          <i class="fas fa-question-circle"></i>
+          Ver perguntas frequentes
+        </a>
       </div>
 
+      <!-- Support Form -->
       <form class="support-form" [formGroup]="supportForm" (ngSubmit)="submit()" novalidate>
-        <h2>Abra um chamado</h2>
+        <div class="form-header">
+          <h2>
+            <i class="fas fa-ticket-alt"></i>
+            Abra um chamado
+          </h2>
+          <p>Descreva seu problema e nossa equipe responderá em até 24 horas</p>
+        </div>
+
         <div class="form-field">
-          <label for="supportName">Nome</label>
-          <input id="supportName" type="text" formControlName="name" placeholder="Como devemos te chamar?" />
+          <label for="supportName">Nome completo *</label>
+          <input 
+            id="supportName" 
+            type="text" 
+            formControlName="name" 
+            placeholder="Como devemos te chamar?"
+            [class.has-error]="supportForm.get('name')?.invalid && supportForm.get('name')?.touched"
+          />
           <small class="error" *ngIf="supportForm.get('name')?.invalid && supportForm.get('name')?.touched">
+            <i class="fas fa-exclamation-circle"></i>
             Informe um nome com pelo menos 3 caracteres.
           </small>
         </div>
 
         <div class="form-field">
-          <label for="supportEmail">E-mail</label>
-          <input id="supportEmail" type="email" formControlName="email" placeholder="seu.email@empresa.com" />
+          <label for="supportEmail">E-mail *</label>
+          <input 
+            id="supportEmail" 
+            type="email" 
+            formControlName="email" 
+            placeholder="seu.email@empresa.com"
+            [class.has-error]="supportForm.get('email')?.invalid && supportForm.get('email')?.touched"
+          />
           <small class="error" *ngIf="supportForm.get('email')?.invalid && supportForm.get('email')?.touched">
+            <i class="fas fa-exclamation-circle"></i>
             Informe um e-mail válido.
           </small>
         </div>
 
         <div class="form-field">
-          <label for="supportTopic">Categoria</label>
+          <label for="supportTopic">Categoria *</label>
           <select id="supportTopic" formControlName="topic">
             <option *ngFor="let topic of topics$ | async" [ngValue]="topic.id">{{ topic.label }}</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="supportDescription">Descreva o que está acontecendo</label>
-          <textarea id="supportDescription" rows="5" formControlName="description" placeholder="Compartilhe detalhes e anexos relevantes"></textarea>
+          <label for="supportDescription">Descrição do problema *</label>
+          <textarea 
+            id="supportDescription" 
+            rows="5" 
+            formControlName="description" 
+            placeholder="Compartilhe detalhes sobre o que está acontecendo..."
+            [class.has-error]="supportForm.get('description')?.invalid && supportForm.get('description')?.touched"
+          ></textarea>
           <small class="error" *ngIf="supportForm.get('description')?.invalid && supportForm.get('description')?.touched">
+            <i class="fas fa-exclamation-circle"></i>
             Informe uma descrição com pelo menos 10 caracteres.
           </small>
         </div>
 
-        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || supportForm.invalid">
+          <i class="fas" [class.fa-spinner]="isSubmitting" [class.fa-paper-plane]="!isSubmitting"></i>
           {{ isSubmitting ? 'Enviando…' : 'Registrar chamado' }}
         </button>
 
-        <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
-        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <div class="form-messages">
+          <p class="success" *ngIf="successMessage">
+            <i class="fas fa-check-circle"></i>
+            {{ successMessage }}
+          </p>
+          <p class="error" *ngIf="errorMessage">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+          </p>
+        </div>
       </form>
     </div>
   </div>

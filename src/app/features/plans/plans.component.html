@@ -1,33 +1,52 @@
-<section class="plans-grid" aria-live="polite">
-  <div class="container">
-    <div class="loading" *ngIf="isLoading">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Carregando planos estratégicos…</p>
-    </div>
+<section class="plans-hero">
+  <div class="hero-content">
+    <h1>Programas completos para sua jornada em SST</h1>
+    <p>Combine mentorias, materiais práticos e acompanhamentos contínuos para evoluir a cultura de segurança e bem-estar da sua organização.</p>
+  </div>
+</section>
 
-    <div class="error" *ngIf="!isLoading && errorMessage">
-  <p>{{ errorMessage }}</p>
+<div class="loading" *ngIf="isLoading()">
+  <span class="spinner" aria-hidden="true"></span>
+  <p>Carregando planos estratégicos…</p>
+</div>
+
+<div class="error" *ngIf="!isLoading() && errorMessage()">
+  <p>{{ errorMessage() }}</p>
   <button class="btn btn-secondary" (click)="retryLoadPlans()">Tentar novamente</button>
-    </div>
+</div>
 
-    <div class="grid" *ngIf="!isLoading && !errorMessage">
-      <pros-plan-card *ngFor="let plan of plans; trackBy: trackById" [plan]="plan">
+<section class="plans-content" *ngIf="!isLoading() && !errorMessage()" aria-live="polite">
+  <!-- Planos Empresariais -->
+  <div class="container" *ngIf="enterprisePlans().length > 0">
+    <div class="section-header">
+      <h2>Planos Empresariais</h2>
+      <p>Soluções completas para empresas com demandas específicas de SST</p>
+    </div>
+    <div class="grid">
+      <pros-plan-card *ngFor="let plan of enterprisePlans(); trackBy: trackById" [plan]="plan">
         <div class="plan-type">{{ planTypeLabel(plan.type) }}</div>
       </pros-plan-card>
     </div>
   </div>
-  </section>
 
-
-  <section class="page-header plans-header">
-    <div class="container">
-      <h1>Programas completos para acelerar a sua jornada em SST</h1>
-      <p class="subtitle">
-        Combine mentorias, materiais práticos e acompanhamentos contínuos para evoluir a cultura de segurança e bem-estar da sua organização.
-      </p>
-      <a class="btn btn-secondary" routerLink="/catalog">Explorar catálogo completo</a>
+  <!-- Planos Individuais -->
+  <div class="container" *ngIf="otherPlans().length > 0">
+    <div class="section-header">
+      <h2>Planos Individuais</h2>
+      <p>Impulsione seu desenvolvimento profissional com programas personalizados para sua evolução</p>
     </div>
-  </section>
+    <div class="grid">
+      <pros-plan-card *ngFor="let plan of otherPlans(); trackBy: trackById" [plan]="plan">
+        <div class="plan-type">{{ planTypeLabel(plan.type) }}</div>
+      </pros-plan-card>
+    </div>
+  </div>
+
+  <!-- CTA Final -->
+  <div class="container plans-cta">
+    <a class="btn btn-secondary" routerLink="/catalog">Explorar catálogo completo</a>
+  </div>
+</section>
 
 
 

@@ -1,10 +1,12 @@
-<section class="catalog-page">
-  <div class="container">
-    <header class="page-header catalog-header">
-      <h1>Catálogo de Conteúdos</h1>
-      <p>Explore e-books, cursos gravados e treinamentos ao vivo disponíveis para sua equipe.</p>
-    </header>
+<section class="catalog-hero">
+  <div class="hero-content">
+    <h1>Catálogo de Conteúdos</h1>
+    <p>Explore e-books, cursos gravados e treinamentos ao vivo disponíveis para sua equipe.</p>
+  </div>
+</section>
 
+<div class="catalog-page">
+  <div class="container">
     <div class="catalog-filters" role="group" aria-label="Filtros do catálogo">
       <div class="catalog-filter-bar">
         <div class="catalog-search">
@@ -18,7 +20,7 @@
           />
         </div>
 
-        <div class="catalog-format-toggle" role="group" aria-label="Filtrar por formato">
+        <div class="catalog-format-toggle" role="group" aria-label="Filtrar por formato" *ngIf="true">
           <button type="button" [class.active]="selectedFormat === ''" (click)="selectFormat('')">Todos</button>
           <button type="button" [class.active]="selectedFormat === 'EBOOK'" (click)="selectFormat('EBOOK')">E-books</button>
           <button
@@ -56,12 +58,12 @@
       </div>
     </div>
 
-    <div class="catalog-state" *ngIf="isLoading">
-      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+    <div class="catalog-loading" *ngIf="isLoading">
+      <span class="spinner" aria-hidden="true"></span>
       <p>Carregando conteúdos…</p>
     </div>
 
-    <div class="catalog-state error" *ngIf="hasError">
+    <div class="catalog-error" *ngIf="hasError">
       <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
       <p>Não foi possível carregar o catálogo agora. Tente novamente mais tarde.</p>
     </div>
@@ -99,4 +101,4 @@
       <p>Nenhum conteúdo encontrado com os filtros atuais.</p>
     </div>
   </div>
-</section>
+</div>

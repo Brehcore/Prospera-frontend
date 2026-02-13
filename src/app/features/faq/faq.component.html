@@ -1,38 +1,88 @@
-<section class="page-header faq-hero">
+<section class="faq-hero">
   <div class="container">
-    <h1>Perguntas Frequentes</h1>
-    <p>Respostas rápidas sobre acesso, conteúdos e suporte.</p>
+    <div class="hero-content">
+      <h1>Perguntas Frequentes</h1>
+      <p>Encontre respostas rápidas sobre acesso, conteúdos, planos e suporte.</p>
+    </div>
   </div>
 </section>
 
 <section class="faq-content">
   <div class="container">
-    <div class="faq-grid">
-      <div class="faq-list">
-        <h2>Dúvidas comuns</h2>
-        <dl>
-          <div *ngFor="let item of faqItems">
-            <dt>{{ item.question }}</dt>
-            <dd>{{ item.answer }}</dd>
+    <div class="faq-wrapper">
+      <div class="faq-categories">
+        <div *ngFor="let category of categories" class="category-section">
+          <h2 class="category-title">{{ category }}</h2>
+          
+          <div class="accordion">
+            <div 
+              *ngFor="let item of getItemsByCategory(category); let i = index"
+              class="accordion-item"
+              [class.expanded]="expandedIndex() === faqItems.indexOf(item)"
+            >
+              <button 
+                class="accordion-header"
+                (click)="toggleAccordion(faqItems.indexOf(item))"
+                [attr.aria-expanded]="expandedIndex() === faqItems.indexOf(item)"
+              >
+                <span class="question-text">{{ item.question }}</span>
+                <span class="toggle-icon">
+                  <i class="fas fa-chevron-down"></i>
+                </span>
+              </button>
+              
+              <div class="accordion-content" [hidden]="expandedIndex() !== faqItems.indexOf(item)">
+                <div class="content-inner">
+                  {{ item.answer }}
+                </div>
+              </div>
+            </div>
           </div>
-        </dl>
-        <a class="btn btn-secondary" routerLink="/suporte">Precisa de ajuda adicional?</a>
+        </div>
       </div>
 
-      <div class="faq-policies">
-        <article>
-          <h2>Política de Privacidade</h2>
-          <ul>
-            <li *ngFor="let item of privacyHighlights">{{ item }}</li>
+      <aside class="faq-sidebar">
+        <div class="support-card">
+          <div class="support-icon">
+            <i class="fas fa-headset"></i>
+          </div>
+          <h3>Precisa de ajuda?</h3>
+          <p>Não encontrou a resposta? Nossa equipe de suporte está pronta para ajudar.</p>
+          <a class="btn btn-primary" routerLink="/suporte">
+            <i class="fas fa-arrow-right"></i> Central de Suporte
+          </a>
+        </div>
+
+        <div class="info-card">
+          <h3>Dicas rápidas</h3>
+          <ul class="tips-list">
+            <li>
+              <span class="tip-icon">
+                <i class="fas fa-graduation-cap"></i>
+              </span>
+              <span>Acesse seus cursos em "Cursos & Treinamentos"</span>
+            </li>
+            <li>
+              <span class="tip-icon">
+                <i class="fas fa-lock"></i>
+              </span>
+              <span>Altere sua senha regularmente em "Trocar Senha"</span>
+            </li>
+            <li>
+              <span class="tip-icon">
+                <i class="fas fa-credit-card"></i>
+              </span>
+              <span>Gerencie planos em "Métodos de Pagamento"</span>
+            </li>
+            <li>
+              <span class="tip-icon">
+                <i class="fas fa-building"></i>
+              </span>
+              <span>Organize sua equipe em "Gerenciar Empresas"</span>
+            </li>
           </ul>
-        </article>
-        <article>
-          <h2>Termos de Uso</h2>
-          <ul>
-            <li *ngFor="let item of termsHighlights">{{ item }}</li>
-          </ul>
-        </article>
-      </div>
+        </div>
+      </aside>
     </div>
   </div>
 </section>

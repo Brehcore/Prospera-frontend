@@ -1,93 +1,161 @@
-<section class="page-header contact-hero">
-  <div class="container">
-    <h1>Contato</h1>
-    <p>Estamos prontos para apoiar a sua empresa em cada etapa da jornada de desenvolvimento.</p>
+<section class="contact-hero">
+  <div class="hero-content">
+    <h1>Fale conosco</h1>
+    <p>Estamos prontos para apoiar sua empresa em cada etapa da jornada. Responderemos em até um dia útil.</p>
   </div>
 </section>
 
-<section class="contact-wrapper">
-  <div class="container contact-grid">
-    <div class="contact-info">
-      <h2>Fale com a Prospera</h2>
-      <p>
-        Tire suas dúvidas, solicite uma demonstração ou compartilhe necessidades específicas. Nosso time responde em até um dia útil.
-      </p>
-      <ul>
-        <li>
+<section class="contact-channels">
+  <div class="container">
+    <div class="channels-grid">
+      <div class="channel-card">
+        <div class="channel-icon">
           <i class="fas fa-envelope" aria-hidden="true"></i>
-          <div>
-            <strong>E-mail</strong>
-            <span>contato@gotreeconsultoria.com.br</span>
-          </div>
-        </li>
-        <li>
+        </div>
+        <h3>E-mail</h3>
+        <p>Resposta em até 24 horas</p>
+        <a href="mailto:contato@gotreeconsultoria.com.br" class="channel-link">contato@gotreeconsultoria.com.br</a>
+      </div>
+      <div class="channel-card">
+        <div class="channel-icon">
           <i class="fas fa-phone" aria-hidden="true"></i>
-          <div>
-            <strong>Telefone</strong>
-            <span>+55 (81) 98944-4164</span>
-          </div>
-        </li>
-        <li>
+        </div>
+        <h3>Telefone</h3>
+        <p>Seg-Sex, 9h-18h</p>
+        <a href="tel:+558198944164" class="channel-link">+55 (81) 98944-4164</a>
+      </div>
+      <div class="channel-card">
+        <div class="channel-icon">
           <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-          <div>
-            <strong>Atendimento</strong>
-            <span>Brasil · Atendimento remoto e híbrido</span>
-          </div>
-        </li>
-      </ul>
+        </div>
+        <h3>Localização</h3>
+        <p>Brasil</p>
+        <span class="channel-link">Atendimento remoto e híbrido</span>
+      </div>
     </div>
-
-    <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submit()" novalidate>
-      <div class="form-field">
-        <label for="contactName">Nome</label>
-        <input id="contactName" type="text" formControlName="name" placeholder="Seu nome completo" />
-        <small class="error" *ngIf="contactForm.get('name')?.invalid && contactForm.get('name')?.touched">
-          Informe um nome com pelo menos 3 caracteres.
-        </small>
-      </div>
-
-      <div class="form-field">
-        <label for="contactEmail">E-mail</label>
-        <input id="contactEmail" type="email" formControlName="email" placeholder="voce@empresa.com" />
-        <small class="error" *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched">
-          Informe um e-mail válido.
-        </small>
-      </div>
-
-      <div class="form-field">
-        <label for="contactSubject">Assunto</label>
-        <input id="contactSubject" type="text" formControlName="subject" placeholder="Como podemos ajudar?" />
-        <small class="error" *ngIf="contactForm.get('subject')?.invalid && contactForm.get('subject')?.touched">
-          Descreva brevemente o assunto.
-        </small>
-      </div>
-
-      <div class="form-field">
-        <label for="contactMessage">Mensagem</label>
-        <textarea id="contactMessage" rows="5" formControlName="message" placeholder="Conte detalhes sobre a necessidade"></textarea>
-        <small class="error" *ngIf="contactForm.get('message')?.invalid && contactForm.get('message')?.touched">
-          Escreva uma mensagem com pelo menos 10 caracteres.
-        </small>
-      </div>
-
-      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
-        {{ isSubmitting ? 'Enviando…' : 'Enviar mensagem' }}
-      </button>
-
-      <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
-      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    </form>
   </div>
 </section>
 
-<section class="contact-cta">
+<section class="contact-content">
   <div class="container">
-    <div class="cta-card">
-      <div>
-        <h2>Preferir falar diretamente?</h2>
-        <p>Envie um e-mail para <strong>contato@gotreeconsultoria.com.br</strong> ou chame no WhatsApp: <strong>+55 (81) 98944-4164</strong>.</p>
+    <div class="contact-grid">
+      <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submit()" novalidate>
+        <h2>Envie sua mensagem</h2>
+        
+        <div class="form-field">
+          <label for="contactName">Nome <span class="required">*</span></label>
+          <input 
+            id="contactName" 
+            type="text" 
+            formControlName="name" 
+            placeholder="Seu nome completo"
+            [class.error-input]="contactForm.get('name')?.invalid && contactForm.get('name')?.touched"
+          />
+          <small class="error" *ngIf="contactForm.get('name')?.invalid && contactForm.get('name')?.touched">
+            Informe um nome com pelo menos 3 caracteres.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="contactEmail">E-mail <span class="required">*</span></label>
+          <input 
+            id="contactEmail" 
+            type="email" 
+            formControlName="email" 
+            placeholder="voce@empresa.com"
+            [class.error-input]="contactForm.get('email')?.invalid && contactForm.get('email')?.touched"
+          />
+          <small class="error" *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched">
+            Informe um e-mail válido.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="contactSubject">Assunto <span class="required">*</span></label>
+          <input 
+            id="contactSubject" 
+            type="text" 
+            formControlName="subject" 
+            placeholder="Como podemos ajudar?"
+            [class.error-input]="contactForm.get('subject')?.invalid && contactForm.get('subject')?.touched"
+          />
+          <small class="error" *ngIf="contactForm.get('subject')?.invalid && contactForm.get('subject')?.touched">
+            Descreva brevemente o assunto.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="contactMessage">Mensagem <span class="required">*</span></label>
+          <textarea 
+            id="contactMessage" 
+            rows="5" 
+            formControlName="message" 
+            placeholder="Conte detalhes sobre sua necessidade"
+            [class.error-input]="contactForm.get('message')?.invalid && contactForm.get('message')?.touched"
+          ></textarea>
+          <small class="error" *ngIf="contactForm.get('message')?.invalid && contactForm.get('message')?.touched">
+            Escreva uma mensagem com pelo menos 10 caracteres.
+          </small>
+        </div>
+
+        <button type="submit" class="btn btn-primary submit-btn" [disabled]="isSubmitting">
+          <i class="fas fa-paper-plane" *ngIf="!isSubmitting" aria-hidden="true"></i>
+          {{ isSubmitting ? 'Enviando…' : 'Enviar mensagem' }}
+        </button>
+
+        <div class="form-messages">
+          <p class="success" *ngIf="successMessage">
+            <i class="fas fa-check-circle" aria-hidden="true"></i>
+            {{ successMessage }}
+          </p>
+          <p class="error-message" *ngIf="errorMessage">
+            <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+            {{ errorMessage }}
+          </p>
+        </div>
+      </form>
+
+      <div class="contact-info">
+        <h2>Por que falar com a gente?</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-rocket" aria-hidden="true"></i>
+            </div>
+            <div>
+              <h4>Implementação rápida</h4>
+              <p>Comece em dias, não em meses</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-headset" aria-hidden="true"></i>
+            </div>
+            <div>
+              <h4>Suporte dedicado</h4>
+              <p>Tim especializado para ajudar</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-shield-alt" aria-hidden="true"></i>
+            </div>
+            <div>
+              <h4>Segurança em primeiro lugar</h4>
+              <p>Conformidade com LGPD e GDPR</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-chart-line" aria-hidden="true"></i>
+            </div>
+            <div>
+              <h4>ROI comprovado</h4>
+              <p>Resultados mensuráveis desde dia 1</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <a class="btn btn-secondary" href="mailto:contato@gotreeconsultoria.com.br">Enviar e-mail</a>
     </div>
   </div>
 </section>

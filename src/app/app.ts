@@ -78,7 +78,7 @@ export class App {
   );
 
   readonly accountMenuItems = [
-    { id: 'profile', label: 'Perfil', icon: 'fas fa-user' },
+    { id: 'profile', label: 'Minha Conta', icon: 'fas fa-user' },
     { id: 'manageCompanies', label: 'Gerenciar Empresas', icon: 'fas fa-building' },
     { id: 'plans', label: 'Planos & Assinatura', icon: 'fas fa-layer-group' },
     { id: 'learning', label: 'Cursos & Treinamentos', icon: 'fas fa-graduation-cap' }

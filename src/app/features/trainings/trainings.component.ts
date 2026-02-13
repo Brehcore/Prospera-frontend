@@ -13,8 +13,6 @@ import { take } from 'rxjs';
   template: `
   <section class="trainings-page">
     <div class="container">
-      <h1>Treinamentos</h1>
-
       <div class="loading" *ngIf="loading()">
         <span class="spinner" aria-hidden="true"></span>
         <p>Carregando catálogo de treinamentos…</p>

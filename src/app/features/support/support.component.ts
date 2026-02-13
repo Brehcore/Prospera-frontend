@@ -5,6 +5,14 @@ import { RouterLink } from '@angular/router';
 
 import { SupportService } from '../../core/services/support.service';
 
+interface ContactChannel {
+  icon: string;
+  title: string;
+  description: string;
+  value: string;
+  link?: string;
+}
+
 @Component({
   selector: 'pros-support',
   standalone: true,
@@ -17,6 +25,28 @@ export class SupportComponent {
   private readonly supportService = inject(SupportService);
 
   readonly topics$ = this.supportService.getSupportTopics();
+
+  readonly contactChannels: ContactChannel[] = [
+    {
+      icon: 'fa-envelope',
+      title: 'E-mail',
+      description: 'Resposta em até 24 horas',
+      value: 'suporte@prospera.com.br',
+      link: 'mailto:suporte@prospera.com.br'
+    },
+    {
+      icon: 'fa-phone',
+      title: 'Telefone',
+      description: 'Seg-Sex, 9h-18h',
+      value: '(11) 3000-0000'
+    },
+    {
+      icon: 'fa-comments',
+      title: 'Chat ao Vivo',
+      description: 'Atendimento imediato',
+      value: 'Disponível em horário comercial'
+    }
+  ];
 
   readonly supportForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(3)]],

@@ -1,112 +1,153 @@
 
-.plans-grid {
-  padding: 3rem 0;
+.plans-hero {
+  background: linear-gradient(135deg, var(--verde-escuro) 0%, var(--verde-claro) 100%);
+  color: white;
+  padding: 5rem 0 3rem;
+  text-align: center;
 
-  .loading,
-  .error {
-    text-align: center;
-    padding: 3rem 0;
+  .hero-content {
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: white;
+      max-width: 600px;
+      margin: 0 auto;
+    }
   }
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 
   .spinner {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 999px;
-    border: 3px solid rgba(91, 95, 99, 0.2);
-    border-top-color: var(--color-primary-500, #6a5acd);
+    border: 3px solid rgba(79, 168, 108, 0.2);
+    border-top-color: var(--verde-escuro);
     display: inline-block;
     animation: spin 1s linear infinite;
+  }
+
+  p {
+    color: var(--gray-medium);
+    font-size: 1rem;
+  }
+}
+
+.error {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 3rem auto;
+
+  p {
+    color: #856404;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+  }
+
+  .btn {
+    margin-top: 1rem;
+  }
+}
+
+.plans-content {
+  padding: 4rem 0 3rem;
+  background: var(--cinza-claro, #f6f7fb);
+
+  .container {
+    margin-bottom: 4rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--verde-escuro);
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      color: var(--gray-medium);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
   }
 
   .grid {
     display: grid;
     gap: 2rem;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    /* garantir que cada célula do grid estique seu conteúdo verticalmente */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     align-items: stretch;
-  }
 
-  .plan-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: #fff;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 12px 32px rgba(31, 36, 43, 0.08);
-    border: 1px solid rgba(106, 90, 205, 0.08);
-
-    h2 {
-      font-size: 1.5rem;
-      margin-block: 0.75rem;
-    }
-
-    p {
-      color: var(--color-text-muted, #5b5f63);
-    }
-
-    .badge {
-      display: inline-flex;
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      background: rgba(106, 90, 205, 0.12);
-      color: var(--color-primary-600, #5a4bcf);
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-    }
-
-    .plan-sectors {
-      margin-top: 1.5rem;
-
-      ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0;
-        margin: 0;
-        list-style: none;
-      }
-
-      li {
-        padding: 0.35rem 0.75rem;
-        background: rgba(91, 95, 99, 0.08);
-        border-radius: 999px;
-        font-size: 0.75rem;
-        letter-spacing: 0.08em;
-      }
-    }
-
-    .plan-actions {
-      margin-top: auto;
-
-      .btn {
-        width: 100%;
-        text-align: center;
-        margin-top: 1.5rem;
-      }
+    > * {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
   }
 
-  /* aplica height:100% nos componentes dentro do grid para que o card ocupe todo o espaço */
-  .grid > * {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  .plans-cta {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(79, 168, 108, 0.1);
+
+    .btn {
+      display: inline-block;
+      margin-top: 1rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 2rem 0 2rem;
+
+    .section-header {
+      margin-bottom: 2rem;
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      p {
+        font-size: 0.95rem;
+      }
+    }
+
+    .grid {
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
   }
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
-}
-
-/* Reintrodução leve do header (sem eyebrow) */
-.plans-header {
-  text-align: center;
-  padding: 3rem 0 2rem;
-  h1 { margin: 0 0 1rem; font-size: clamp(1.9rem,4.5vw,2.6rem); }
-  .subtitle { max-width: 760px; margin: 0 auto 1.75rem; color: var(--color-text-muted,#5b5f63); }
-  .btn { margin-top: .5rem; }
 }

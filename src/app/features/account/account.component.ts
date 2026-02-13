@@ -21,7 +21,7 @@ interface AccountMenuItem {
 }
 
 interface ProfileSectionItem {
-  id: 'dados' | 'payments' | 'password' | 'company';
+  id: 'dados' | 'payments' | 'password' | 'email' | 'company';
   label: string;
   action?: string;
   requiresCompanyAdmin?: boolean;
@@ -48,7 +48,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   private readonly baseMenuItems: AccountMenuItem[] = [
-    { id: 'profile', label: 'Perfil', icon: 'fas fa-user' },
+    { id: 'profile', label: 'Minha Conta', icon: 'fas fa-user' },
     { id: 'manageCompanies', label: 'Gerenciar Empresas', icon: 'fas fa-building' },
     { id: 'plans', label: 'Planos & Assinatura', icon: 'fas fa-layer-group' },
     { id: 'learning', label: 'Cursos & Treinamentos', icon: 'fas fa-graduation-cap' }
@@ -61,6 +61,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   readonly profileSections: ProfileSectionItem[] = [
     { id: 'dados', label: 'Dados cadastrais' },
     { id: 'payments', label: 'Pagamentos' },
+    { id: 'email', label: 'Alterar e-mail' },
     { id: 'password', label: 'Trocar senha' },
     // 'company' tab removed from profile per request; company management remains available via the sidebar menu
   ];
@@ -1370,6 +1371,11 @@ export class AccountComponent implements OnInit, OnDestroy {
         return 'Pagamento';
       case 'PROMO':
         return 'Promoção';
+      case 'ORGANIZATION':
+      case 'ORGANIZATIONAL':
+      case 'ORGANIZATIONAL_SUBSCRIPTION':
+      case 'ORGANIZATION_SUBSCRIPTION':
+        return 'Empresarial';
       default:
         return origin.charAt(0) + origin.slice(1).toLowerCase();
     }
