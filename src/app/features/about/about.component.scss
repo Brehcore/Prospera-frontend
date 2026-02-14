@@ -1,16 +1,62 @@
 .about-hero {
-  text-align: center;
-  padding: 5rem 0 3rem;
+  padding: 4rem 0;
+  background: linear-gradient(180deg, var(--verde-claro, #0fbf8f) 0%, var(--verde-escuro, #0a6b4a) 100%);
+  color: #fff;
 
-  h1 {
-    font-size: clamp(2.25rem, 5vw, 3rem);
-    margin-bottom: 1rem;
+  .hero-inner {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    align-items: center;
+
+    @media (min-width: 900px) {
+      grid-template-columns: 1fr 360px;
+    }
   }
 
-  p {
-    color: var(--color-text-muted, #5b5f63);
-    max-width: 720px;
-    margin: 0 auto;
+  .hero-copy {
+    h1 {
+      font-size: clamp(1.85rem, 4.2vw, 2.8rem);
+      margin: 0 0 0.6rem;
+    }
+
+    .lead {
+      color: rgba(255, 255, 255, 0.95);
+      max-width: 720px;
+      margin-bottom: 1rem;
+      font-size: 1.05rem;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 0.75rem;
+
+      .btn {
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+      }
+
+      .btn-primary { background: #fff; color: var(--verde-escuro, #0a6b4a); }
+      .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
+    }
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    text-align: right;
+
+    .stat {
+      background: rgba(255,255,255,0.06);
+      padding: 1rem;
+      border-radius: 12px;
+      min-width: 110px;
+
+      .num { font-weight: 700; font-size: 1.35rem; }
+      .label { font-size: 0.85rem; opacity: 0.95; }
+    }
   }
 }
 
@@ -19,7 +65,7 @@
 
   .about-grid {
     display: grid;
-    gap: 2.5rem;
+    gap: 2rem;
     grid-template-columns: 1fr;
 
     @media (min-width: 960px) {
@@ -29,51 +75,56 @@
 
   .about-story {
     background: #fff;
-    border-radius: 18px;
-    padding: 2.5rem;
-    box-shadow: 0 18px 36px rgba(27, 34, 48, 0.08);
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 12px 26px rgba(27, 34, 48, 0.06);
 
-    h2 {
-      font-size: 1.8rem;
-      margin-bottom: 1.25rem;
-    }
+    h2 { font-size: 1.6rem; margin-bottom: 0.75rem; }
+    h3 { margin-top: 1.35rem; margin-bottom: 0.5rem; }
 
-    h3 {
-      margin-top: 1.75rem;
-      margin-bottom: 0.75rem;
-      font-size: 1.25rem;
-    }
+    p { color: var(--color-text-muted, #5b5f63); line-height: 1.5; }
 
-    p {
-      color: var(--color-text-muted, #5b5f63);
-    }
+    .values ul { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.5rem; }
   }
 
   .about-features {
     display: grid;
-    gap: 1.5rem;
+    gap: 1rem;
 
     .feature {
       background: #fff;
-      border-radius: 16px;
-      padding: 1.75rem;
-      text-align: center;
-      box-shadow: 0 18px 32px rgba(27, 34, 48, 0.08);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: left;
+      box-shadow: 0 12px 20px rgba(27, 34, 48, 0.06);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
 
-      i {
-        font-size: 2rem;
-        color: var(--color-primary-500, #6a5acd);
-        margin-bottom: 1rem;
+      i { font-size: 1.6rem; color: var(--verde-escuro, #0a6b4a); margin-top: 4px; }
+
+      h4 { font-size: 1.05rem; margin: 0; }
+      p { margin: 0.25rem 0 0; color: var(--color-text-muted, #5b5f63); }
+    }
+
+    .team { margin-top: 0.75rem; }
+    .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+
+    .member {
+      display: flex; gap: 0.75rem; align-items: center; background: #fff; padding: 0.6rem; border-radius: 10px; box-shadow: 0 6px 16px rgba(27,34,48,0.04);
+
+      .avatar {
+        width: 56px;
+        height: 56px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 50%;
+        flex: 0 0 56px;
+        overflow: hidden;
+        box-shadow: 0 6px 12px rgba(27,34,48,0.06);
       }
 
-      h4 {
-        font-size: 1.25rem;
-        margin-bottom: 0.5rem;
-      }
-
-      p {
-        color: var(--color-text-muted, #5b5f63);
-      }
+      .meta { .name { font-weight: 600; } .role { font-size: 0.85rem; color: var(--color-text-muted, #6b6f73); } }
     }
   }
 }

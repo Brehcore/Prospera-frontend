@@ -1,21 +1,51 @@
 <section class="page-header agenda-hero">
   <div class="container">
-    <h1>Agenda de eventos</h1>
-    <p>Experiências ao vivo e encontros exclusivos para acelerar a implantação dos programas de SST.</p>
+    <div class="hero-inner">
+      <div>
+        <h1>Agenda de eventos</h1>
+        <p class="lead">Encontros, workshops e sessões práticas para apoiar a implementação dos seus programas.</p>
+      </div>
+      <!-- hero-actions removed (search field) -->
+    </div>
   </div>
 </section>
 
 <section class="agenda-list">
-  <div class="container">
-    <div class="event-card" *ngFor="let event of upcomingEvents">
-      <div class="event-header">
-        <span class="badge" [class.badge-online]="event.modality === 'online'" [class.badge-presencial]="event.modality === 'presencial'">
-          {{ event.modality === 'online' ? 'On-line' : 'Presencial' }}
-        </span>
-        <h2>{{ event.title }}</h2>
+  <div class="container layout">
+    <main class="events">
+      <div class="event-card" *ngFor="let event of filteredEvents()">
+        <div class="date-block">
+          <div class="day">{{ event.day }}</div>
+          <div class="month">{{ event.month }}</div>
+        </div>
+
+        <div class="event-body">
+          <div class="event-row">
+            <h3>{{ event.title }}</h3>
+            <span class="badge" [class.badge-online]="event.modality === 'online'" [class.badge-presencial]="event.modality === 'presencial'">{{ event.modality === 'online' ? 'On-line' : 'Presencial' }}</span>
+          </div>
+          <p class="description">{{ event.description }}</p>
+          <div class="meta">
+            <div class="time">{{ event.time }}</div>
+            <a class="btn btn-sm" href="#">Inscreva-se</a>
+          </div>
+        </div>
       </div>
-      <p>{{ event.description }}</p>
-      <p class="event-date">{{ event.date }}</p>
-    </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="calendar">
+        <h4>Próximas turmas</h4>
+        <ul>
+          <li *ngFor="let e of upcomingEvents">{{ e.day }} {{ e.month }} — {{ e.title }}</li>
+        </ul>
+      </div>
+
+      <div class="contact-card">
+        <h4>Precisa de ajuda?</h4>
+        <p>Fale com nossa equipe para montar uma turma customizada.</p>
+        <a class="btn btn-primary" href="/contact">Contato</a>
+      </div>
+    </aside>
   </div>
 </section>

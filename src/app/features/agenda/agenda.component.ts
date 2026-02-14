@@ -5,6 +5,9 @@ interface AgendaEvent {
   title: string;
   description: string;
   date: string;
+  day: string;
+  month: string;
+  time: string;
   modality: 'online' | 'presencial';
 }
 
@@ -16,24 +19,38 @@ interface AgendaEvent {
   styleUrls: ['./agenda.component.scss']
 })
 export class AgendaComponent {
+
   readonly upcomingEvents: AgendaEvent[] = [
     {
       title: 'Workshop de liderança em SST',
       description: 'Capacitação intensiva para líderes que desejam consolidar culturas de segurança.',
-      date: '10 de outubro · 14h às 16h',
+      date: '2026-10-10',
+      day: '10',
+      month: 'Out',
+      time: '14h – 16h',
       modality: 'online'
     },
     {
       title: 'Clínica de ergonomia aplicada',
       description: 'Sessão prática com análise de casos reais e ajustes por posto de trabalho.',
-      date: '22 de outubro · 9h às 12h',
+      date: '2026-10-22',
+      day: '22',
+      month: 'Out',
+      time: '9h – 12h',
       modality: 'presencial'
     },
     {
       title: 'Série Onboarding sem fricção',
       description: 'Sequência de encontros semanais para estruturar trilhas de integração contínuas.',
-      date: 'Novembro · Quartas-feiras · 11h',
+      date: '2026-11-03',
+      day: '03',
+      month: 'Nov',
+      time: '11h',
       modality: 'online'
     }
   ];
+
+  filteredEvents() {
+    return this.upcomingEvents;
+  }
 }

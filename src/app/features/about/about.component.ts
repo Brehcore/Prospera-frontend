@@ -32,4 +32,11 @@ export class AboutComponent {
       description: 'Metodologias comprovadas que geram impacto rápido e sustentável nas organizações.'
     }
   ];
+
+  readonly team = [
+    { name: 'Mariana Silva', role: 'Diretora de Conteúdo', photo: '/assets/images/team-marianas.jpg' },
+    { name: 'Roberto Lima', role: 'Consultor SST', photo: '/assets/images/team-roberto.jpg' },
+    { name: 'Ana Costa', role: 'Designer Instrucional', photo: '/assets/images/team-ana.jpg' },
+    { name: 'Lucas Alves', role: 'Product Manager', photo: '/assets/images/team-lucas.jpg' }
+  ];
 }

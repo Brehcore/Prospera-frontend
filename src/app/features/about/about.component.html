@@ -1,9 +1,30 @@
 <section class="page-header about-hero">
-  <div class="container">
-    <h1>Sobre a Prospera</h1>
-    <p>
-      Somos especialistas em criar programas de aprendizagem acessíveis, práticos e focados em resultados para empresas que desejam fortalecer a cultura de segurança e pessoas.
-    </p>
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <h1>Sobre a Prospera</h1>
+      <p class="lead">
+        Criamos programas de aprendizagem práticos e mensuráveis para fortalecer equipes e cultura organizacional.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/contact">Fale com a gente</a>
+        <a class="btn btn-ghost" href="/trainings">Ver soluções</a>
+      </div>
+    </div>
+
+    <div class="hero-stats" aria-hidden="true">
+      <div class="stat">
+        <div class="num">15+</div>
+        <div class="label">Anos de experiência</div>
+      </div>
+      <div class="stat">
+        <div class="num">300+</div>
+        <div class="label">Empresas atendidas</div>
+      </div>
+      <div class="stat">
+        <div class="num">98%</div>
+        <div class="label">Satisfação média</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -13,22 +34,51 @@
       <article class="about-story">
         <h2>Quem somos</h2>
         <p>
-          A Prospera nasceu da combinação entre consultoria em SST, educação corporativa e transformação digital. Há mais de 15 anos ajudamos organizações a desenvolver seus times com materiais traduzidos para a realidade do chão de fábrica, escritórios e operações híbridas.
+          A Prospera combina consultoria em SST, educação corporativa e transformação digital para entregar treinamentos contextualizados ao dia a dia dos times.
         </p>
-        <h3>Nossa missão</h3>
-        <p>
-          Capacitar pessoas e fortalecer negócios com conteúdos objetivos, linguagem acessível e planos de implementação que resolvem as principais dores da gestão empresarial.
-        </p>
-        <h3>Experiência em campo</h3>
-        <p>
-          Reunimos especialistas em gestão, recursos humanos, saúde ocupacional e comunicação. O resultado é uma metodologia que une clareza, praticidade e indicadores mensuráveis.
-        </p>
+
+        <div class="mission">
+          <h3>Nossa missão</h3>
+          <p>
+            Capacitar pessoas com conteúdos objetivos e planos práticos que geram resultados mensuráveis.
+          </p>
+        </div>
+
+        <div class="experience">
+          <h3>Experiência em campo</h3>
+          <p>
+            Times formados por especialistas em gestão, RH e saúde ocupacional que atuam com foco em implementação e resultados.
+          </p>
+        </div>
+
+        <div class="values">
+          <h4>Valores</h4>
+          <ul>
+            <li>Clareza na comunicação</li>
+            <li>Praticidade na entrega</li>
+            <li>Foco em indicadores</li>
+          </ul>
+        </div>
       </article>
+
       <aside class="about-features">
         <div class="feature" *ngFor="let feature of features">
           <i class="fas" [ngClass]="feature.icon" aria-hidden="true"></i>
           <h4>{{ feature.title }}</h4>
           <p>{{ feature.description }}</p>
+        </div>
+
+        <div class="team">
+          <h4>Nosso time</h4>
+          <div class="team-grid">
+            <div class="member" *ngFor="let m of team">
+              <div class="avatar" [style.backgroundImage]="'url(' + m.photo + ')'" aria-hidden="true"></div>
+              <div class="meta">
+                <div class="name">{{ m.name }}</div>
+                <div class="role">{{ m.role }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
     </div>

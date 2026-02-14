@@ -32,4 +32,12 @@ export class PoliciesComponent {
       ]
     }
   ];
+  print(): void {
+    try { window.print(); } catch (e) { /* no-op in test environments */ }
+  }
+
+  isStaticSection(title: string): boolean {
+    const t = (title || '').trim().toLowerCase();
+    return t === 'política de privacidade' || t === 'termos de uso' || t === 'politica de privacidade';
+  }
 }

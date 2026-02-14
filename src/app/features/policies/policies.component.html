@@ -1,15 +1,34 @@
-<section class="page-header policies-hero">
-  <div class="container">
+<section class="policies-hero">
+  <div class="hero-content">
     <h1>Políticas e LGPD</h1>
-    <p>Transparência no uso de dados e compromisso com a segurança da informação.</p>
+    <p>Transparência no uso de dados, direitos dos titulares e compromisso com a segurança da informação.</p>
   </div>
 </section>
 
 <section class="policies-content">
   <div class="container">
-    <article *ngFor="let section of sections" class="policy-card">
-      <h2>{{ section.title }}</h2>
-      <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
-    </article>
+    <div class="policies-grid">
+      <ng-container *ngFor="let section of sections">
+        <!-- Mostrar políticas principais sempre expandidas -->
+        <article class="policy-card" *ngIf="isStaticSection(section.title); else collapsible">
+          <h2>{{ section.title }}</h2>
+          <div class="policy-body">
+            <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+          </div>
+        </article>
+
+        <ng-template #collapsible>
+          <details class="policy-card">
+            <summary class="policy-summary">
+              <h2>{{ section.title }}</h2>
+              <span class="chev" aria-hidden="true">▾</span>
+            </summary>
+            <div class="policy-body">
+              <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+            </div>
+          </details>
+        </ng-template>
+      </ng-container>
+    </div>
   </div>
 </section>
