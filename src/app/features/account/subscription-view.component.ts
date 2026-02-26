@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SubscriptionService, UserSubscription, AccessStatus } from '../../core/services/subscription.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '../../core/services/training.service';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'pros-subscription-view',
@@ -85,6 +86,25 @@ import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '
                 <div class="enrollment-status" [attr.data-status]="e.status">
                   {{ e.status === 'ACTIVE' ? 'Em Progresso' : e.status }}
                 </div>
+                <div class="certificate-actions" *ngIf="e.status === 'COMPLETED'">
+                  <button 
+                    *ngIf="!e.certificateId"
+                    class="btn btn--certificate" 
+                    (click)="issueCertificateForEnrollment(e)"
+                    [disabled]="issuingCertificateId() === e.enrollmentId">
+                    {{ issuingCertificateId() === e.enrollmentId ? 'Emitindo...' : '📜 Emitir Certificado' }}
+                  </button>
+                  <button 
+                    *ngIf="e.certificateId"
+                    class="btn btn--certificate" 
+                    (click)="downloadCertificate(e)"
+                    title="Baixar certificado">
+                    📥 Baixar Certificado
+                  </button>
+                  <div *ngIf="certificateErrorMap()[e.enrollmentId || ''] as err" class="error-message">
+                    {{ err }}
+                  </div>
+                </div>
               </div>
             </article>
           </div>
@@ -160,6 +180,11 @@ import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '
   .enrollment-status { font-size:.75rem; letter-spacing:.02em; text-transform:uppercase; font-weight:600; padding:.4rem .7rem; border-radius:999px; background:rgba(91,95,99,.15); display:inline-block; margin-top:auto; width:fit-content; }
   .enrollment-status[data-status="ACTIVE"], .enrollment-status[data-status="ATIVA"] { background:rgba(46,182,125,.18); color:#11805a; }
   .enrollment-status[data-status="COMPLETED"], .enrollment-status[data-status="CONCLUÍDO"] { background:rgba(79,168,108,.15); color:var(--verde-escuro); }
+  .certificate-actions { margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem; }
+  .btn--certificate { background:#6a5acd; color:white; border:none; padding:0.5rem 1rem; border-radius:6px; cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
+  .btn--certificate:hover:not(:disabled) { background:#5a4bcf; }
+  .btn--certificate:disabled { opacity:0.6; cursor:not-allowed; }
+  .error-message { background:rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.3); padding:0.5rem; border-radius:4px; color:#b30021; font-size:0.8rem; }
   @keyframes spin { to { transform: rotate(360deg);} }
   `]
 })
@@ -167,6 +192,7 @@ export class SubscriptionViewComponent implements OnInit {
   private readonly service = inject(SubscriptionService);
   private readonly authService = inject(AuthService);
   private readonly trainingService = inject(TrainingService);
+  private readonly api = inject(ApiService);
 
   // Trainings state
   readonly trainings = signal<TrainingCatalogItemDTO[] | null>(null);
@@ -175,6 +201,10 @@ export class SubscriptionViewComponent implements OnInit {
 
   // Enrollments
   readonly myEnrollments = signal<EnrollmentResponseDTO[] | null>(null);
+
+  // Certificate state
+  readonly issuingCertificateId = signal<string | null>(null);
+  readonly certificateErrorMap = signal<{ [key: string]: string | null }>({});
 
   readonly subscription = signal<UserSubscription | null | undefined>(undefined); // undefined=loading, null=sem assinatura
   readonly loading = computed(() => this.subscription() === undefined);
@@ -352,5 +382,59 @@ export class SubscriptionViewComponent implements OnInit {
       default:
         return s.charAt(0) + s.slice(1).toLowerCase();
     }
+  }
+
+  issueCertificateForEnrollment(enrollment: EnrollmentResponseDTO): void {
+    if (!enrollment.enrollmentId) {
+      this.updateCertificateError(enrollment.enrollmentId || '', 'ID da matrícula não disponível');
+      return;
+    }
+
+    this.issuingCertificateId.set(enrollment.enrollmentId);
+    this.updateCertificateError(enrollment.enrollmentId, null);
+
+    // Backend retorna um código de validação (string simples, não JSON)
+    this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollment.enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
+      next: (validationCode) => {
+        this.issuingCertificateId.set(null);
+        // Atualiza matrícula reconsultando enrollments para obter certificateId atualizado
+        this.trainingService.getMyEnrollments().subscribe({
+          next: (updatedEnrollments: any[]) => {
+            const updated = updatedEnrollments.find(e => e.enrollmentId === enrollment.enrollmentId);
+            if (updated) {
+              const enrollments = this.myEnrollments() || [];
+              const idx = enrollments.findIndex(e => e.enrollmentId === enrollment.enrollmentId);
+              if (idx >= 0) {
+                enrollments[idx] = updated;
+                this.myEnrollments.set([...enrollments]);
+              }
+            }
+          },
+          error: () => {}
+        });
+      },
+      error: (err) => {
+        this.issuingCertificateId.set(null);
+        const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
+        this.updateCertificateError(enrollment.enrollmentId || '', errMsg);
+      }
+    });
+  }
+
+  downloadCertificate(enrollment: EnrollmentResponseDTO): void {
+    if (!enrollment.certificateId) {
+      this.updateCertificateError(enrollment.enrollmentId || '', 'Certificado não disponível');
+      return;
+    }
+
+    // Construa a URL para download do certificado
+    const url = this.api.createUrl(`/api/certificates/download/${encodeURIComponent(enrollment.certificateId)}`)
+    window.location.href = url;
+  }
+
+  private updateCertificateError(enrollmentId: string, error: string | null): void {
+    const map = this.certificateErrorMap();
+    map[enrollmentId] = error;
+    this.certificateErrorMap.set({ ...map });
   }
 }

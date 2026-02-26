@@ -56,19 +56,19 @@ export const routes: Routes = [
 	{
 		path: 'conteudo/visualizar/:id',
 		canActivate: [authGuard],
-		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => (m as any).TrainingViewerComponent),
 		data: { title: 'Visualizar Conteúdo' }
 	},
 	{
 		path: 'treinamento/:id',
 		canActivate: [authGuard],
-		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => (m as any).TrainingViewerComponent),
 		data: { title: 'Detalhe Treinamento' }
 	},
 	{
 		path: 'admin/conteudo/:id',
 		canActivate: [authGuard, adminGuard],
-		loadComponent: () => import('./features/content/training-viewer.component').then(m => m.TrainingViewerComponent),
+		loadComponent: () => import('./features/content/training-viewer.component').then(m => (m as any).TrainingViewerComponent),
 		data: { title: 'Detalhe Conteúdo' }
 	},
 	{
@@ -91,6 +91,12 @@ export const routes: Routes = [
 		path: 'agenda',
 		loadComponent: () => import('./features/agenda/agenda.component').then(m => m.AgendaComponent),
 		data: { title: 'Agenda' }
+	},
+	{
+		path: 'certificados',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/certificates/certificates.component').then(m => m.CertificatesComponent),
+		data: { title: 'Certificados' }
 	},
 	{
 		path: 'suporte',

@@ -49,3 +49,25 @@ export interface EbookProgress {
 export type EbookUploadEvent =
   | { type: 'progress'; progress: number }
   | { type: 'response'; body: unknown };
+
+// --- DTOs / Requests for module/lesson management ---
+export interface ModuleUpdateRequest {
+  title?: string;
+  moduleOrder?: number | null;
+}
+
+export interface LessonUpdateRequest {
+  title?: string;
+  content?: string | null;
+  lessonOrder?: number | null;
+  videoUrl?: string | null;
+}
+
+export interface ReorderItem {
+  id: string;
+  newOrder: number;
+}
+
+export interface ReorderRequest {
+  items: ReorderItem[];
+}

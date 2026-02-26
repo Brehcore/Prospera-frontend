@@ -385,7 +385,7 @@ export class AdminDashboardComponent {
   // Wrappers para funções de PDF do serviço (mantém template simples)
   trainingHasPdf(t: any) { return this.admin.trainingHasPdf(t); }
   extractPdfFileName(t: any) { return this.admin.extractPdfFileName(t); }
-  buildEbookFileUrl(fileName: string) { return this.admin.buildEbookFileUrl(fileName); }
+  buildEbookFileUrl(fileName: string | null = null, trainingId?: string) { return this.admin.buildEbookFileUrl(fileName, trainingId); }
   // Debug simplificado: retorna string explicando a detecção de PDF (ou ausência)
   pdfDebugInfo(t: any): string {
     const dbg = this.admin.trainingPdfDebug(t);

@@ -5,6 +5,10 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
+// Import Quill styles
+import 'quill/dist/quill.core.css';
+import 'quill/dist/quill.snow.css';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),

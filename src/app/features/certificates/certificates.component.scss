@@ -1,0 +1,207 @@
+.certificates-header,
+.card.certificates-header {
+  border-left: 4px solid var(--verde-escuro);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%);
+  margin-bottom: 2rem;
+
+  header {
+    display: block;
+    margin-bottom: 0;
+  }
+
+  .header-content {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+  }
+
+  .header-icon.certificate-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--verde-escuro), var(--verde-claro));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(79, 168, 108, 0.3);
+  }
+
+  h1 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--verde-escuro);
+  }
+
+  p {
+    margin: 0;
+    color: var(--gray-medium);
+    font-size: 0.85rem;
+  }
+}
+
+.grid-header {
+  header {
+    display: block;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .header-content {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+  }
+
+  .header-icon.certificate-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--verde-escuro), var(--verde-claro));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(79, 168, 108, 0.3);
+  }
+
+  h1 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--verde-escuro);
+  }
+
+  p {
+    margin: 0;
+    color: var(--gray-medium);
+    font-size: 0.85rem;
+  }
+}
+
+.certificates-container {
+  padding: 1.5rem 0 3.5rem;
+  background: var(--cinza-claro, #f6f7fb);
+}
+
+.certificates-grid {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--verde-escuro);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.certificates-grid .grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  margin-top: 1.5rem;
+}
+
+.cert-card {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid rgba(79,168,108,0.06);
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(79,168,108,0.12);
+    border-color: rgba(79,168,108,0.15);
+  }
+}
+
+.cert-card .cover {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(79,168,108,0.06), rgba(79,168,108,0.02));
+}
+
+.cert-card .cover img { width: 100%; height: 100%; object-fit: cover; display: block }
+
+.cover-placeholder { width:100%; height:140px; background: linear-gradient(90deg,#f0f0f0,#e6e6e6); }
+
+.cert-card .body { padding:1rem 1rem 1.25rem; display:flex; flex-direction:column; gap:0.5rem }
+
+.cert-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  margin: 0;
+}
+
+.cert-card .issued { font-size: 0.9rem; color: var(--gray-medium); }
+
+.cert-card .actions {
+  margin-top: auto;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.cert-card .btn {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+.cert-card .btn.primary { background: linear-gradient(135deg, var(--verde-escuro), var(--verde-claro)); color: #fff }
+.cert-card .btn.secondary { background: #f5f6f7; color: #333; border: 1px solid #ececec }
+
+.empty-state {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.empty-state .empty-icon {
+  font-size: 3rem;
+  color: var(--verde-claro);
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--verde-escuro);
+  margin: 0 0 0.75rem 0;
+}
+
+.empty-state p {
+  font-size: 0.95rem;
+  color: var(--gray-medium);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .certificates-grid .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}

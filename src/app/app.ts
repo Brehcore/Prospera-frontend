@@ -81,7 +81,8 @@ export class App {
     { id: 'profile', label: 'Minha Conta', icon: 'fas fa-user' },
     { id: 'manageCompanies', label: 'Gerenciar Empresas', icon: 'fas fa-building' },
     { id: 'plans', label: 'Planos & Assinatura', icon: 'fas fa-layer-group' },
-    { id: 'learning', label: 'Cursos & Treinamentos', icon: 'fas fa-graduation-cap' }
+    { id: 'learning', label: 'Cursos & Treinamentos', icon: 'fas fa-graduation-cap' },
+    { id: 'certificates', label: 'Certificados', icon: 'fas fa-certificate' }
   ];
 
   readonly footerDescription =
@@ -159,6 +160,11 @@ export class App {
   }
 
   onMenuItemClick(menuId: string): void {
+    // Navegar para certificados se for o item correspondente
+    if (menuId === 'certificates') {
+      this.router.navigate(['/certificados']);
+      return;
+    }
     // Navegar para a página de conta com a seção selecionada
     this.router.navigate(['/conta'], { queryParams: { section: menuId } });
   }

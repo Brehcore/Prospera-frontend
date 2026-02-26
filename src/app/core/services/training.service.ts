@@ -24,6 +24,10 @@ export interface EnrollmentResponseDTO {
   status: string;
   coverImageUrl?: string | null;
   progressPercentage?: number | null;
+  certificateId?: string | null;
+  userRating?: number | null;
+  ratingComment?: string | null;
+  ratedAt?: string | null;
   entityType?: string;
 }
 

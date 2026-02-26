@@ -174,20 +174,105 @@ export class AdminService {
 
   /**
    * Cria um módulo para um curso gravado (RECORDED_COURSE).
-   * POST /admin/courses/{trainingId}/modules
+   * POST /admin/trainings/{trainingId}/modules
    */
   createCourseModule(trainingId: string, payload: { title: string; moduleOrder?: number }): Observable<any> {
-    const body = { title: (payload.title || '').trim(), moduleOrder: Number(payload.moduleOrder) || 0 };
-    return this.api.post<any>(`/admin/trainings/courses/${encodeURIComponent(trainingId)}/modules`, body).pipe(map(resp => resp as any));
+    const body = { ...(payload || {}) } as any;
+    if (body.title !== undefined && body.title !== null) body.title = String(body.title).trim();
+    if (body.moduleOrder !== undefined) body.moduleOrder = Number(body.moduleOrder);
+    return this.api.post<any>(`/admin/trainings/${encodeURIComponent(trainingId)}/modules`, body).pipe(map(resp => resp as any));
   }
 
   /**
    * Cria uma aula (lesson) dentro de um módulo.
-   * POST /admin/modules/{moduleId}/lessons
+   * POST /admin/trainings/modules/{moduleId}/lessons
    */
-  createModuleLesson(moduleId: string, payload: { title: string; content?: string; lessonOrder?: number }): Observable<any> {
-    const body = { title: (payload.title || '').trim(), content: payload.content ?? undefined, lessonOrder: Number(payload.lessonOrder) || 0 };
+  createModuleLesson(moduleId: string, payload: { title: string; content?: string; lessonOrder?: number; videoUrl?: string }): Observable<any> {
+    const body = { ...(payload || {}) } as any;
+    if (body.title !== undefined && body.title !== null) body.title = String(body.title).trim();
+    if (body.lessonOrder !== undefined) body.lessonOrder = Number(body.lessonOrder);
+    if (body.content !== undefined && body.content !== null) body.content = String(body.content).trim();
+    if (body.videoUrl !== undefined && body.videoUrl !== null) body.videoUrl = String(body.videoUrl).trim();
     return this.api.post<any>(`/admin/trainings/modules/${encodeURIComponent(moduleId)}/lessons`, body).pipe(map(resp => resp as any));
+  }
+
+  /**
+   * Atualiza um módulo existente.
+   * PUT /admin/trainings/modules/{moduleId}
+   */
+  updateCourseModule(moduleId: string, payload: { title?: string; moduleOrder?: number }): Observable<any> {
+    const body = { ...(payload || {}) } as any;
+    if (body.title !== undefined && body.title !== null) body.title = String(body.title).trim();
+    if (body.moduleOrder !== undefined) body.moduleOrder = Number(body.moduleOrder);
+    return this.api.put<any>(`/admin/trainings/modules/${encodeURIComponent(moduleId)}`, body).pipe(map(resp => resp as any));
+  }
+
+  /**
+   * Exclui um módulo (e suas aulas).
+   * DELETE /admin/trainings/modules/{moduleId}
+   */
+  deleteCourseModule(moduleId: string): Observable<void> {
+    return this.api.delete<void>(`/admin/trainings/modules/${encodeURIComponent(moduleId)}`).pipe(map(() => void 0));
+  }
+
+  // Backwards-compatible aliases with expected names
+  updateModule(moduleId: string, payload: { title?: string; moduleOrder?: number }): Observable<any> {
+    return this.updateCourseModule(moduleId, payload);
+  }
+
+  deleteModule(moduleId: string): Observable<void> {
+    return this.deleteCourseModule(moduleId);
+  }
+
+  /**
+   * Atualiza os dados de uma lição existente.
+   * PUT /admin/trainings/lessons/{lessonId}
+   */
+  updateModuleLesson(lessonId: string, payload: { title?: string; content?: string; lessonOrder?: number; videoUrl?: string }): Observable<any> {
+    const body = { ...(payload || {}) } as any;
+    if (body.title !== undefined && body.title !== null) body.title = String(body.title).trim();
+    if (body.lessonOrder !== undefined) body.lessonOrder = Number(body.lessonOrder);
+    // include optional videoUrl when present
+    if (body.videoUrl !== undefined && body.videoUrl !== null) body.videoUrl = String(body.videoUrl).trim();
+    return this.api.put<any>(`/admin/trainings/lessons/${encodeURIComponent(lessonId)}`, body).pipe(map(resp => resp as any));
+  }
+
+  /**
+   * Exclui uma lição específica.
+   * DELETE /admin/trainings/lessons/{lessonId}
+   */
+  deleteModuleLesson(lessonId: string): Observable<void> {
+    return this.api.delete<void>(`/admin/trainings/lessons/${encodeURIComponent(lessonId)}`).pipe(map(() => void 0));
+  }
+
+  // Aliases
+  updateLesson(lessonId: string, payload: { title?: string; content?: string; lessonOrder?: number }): Observable<any> {
+    return this.updateModuleLesson(lessonId, payload);
+  }
+
+  deleteLesson(lessonId: string): Observable<void> {
+    return this.deleteModuleLesson(lessonId);
+  }
+
+  /**
+   * Reordena módulos de um treinamento.
+   * PUT /admin/trainings/{trainingId}/modules/reorder
+   * Payload: { items: [{ id, newOrder }, ... ] }
+   */
+  reorderTrainingModules(trainingId: string, items: { id: string; newOrder: number }[]): Observable<void> {
+    if (!trainingId || !Array.isArray(items)) return of(void 0);
+    const body = { items: items.map(i => ({ id: String(i.id), newOrder: Number(i.newOrder) })) };
+    return this.api.put<void>(`/admin/trainings/${encodeURIComponent(trainingId)}/modules/reorder`, body).pipe(map(() => void 0));
+  }
+
+  /**
+   * Reordena aulas dentro de um módulo.
+   * PUT /admin/trainings/modules/{moduleId}/lessons/reorder
+   */
+  reorderModuleLessons(moduleId: string, items: { id: string; newOrder: number }[]): Observable<void> {
+    if (!moduleId || !Array.isArray(items)) return of(void 0);
+    const body = { items: items.map(i => ({ id: String(i.id), newOrder: Number(i.newOrder) })) };
+    return this.api.put<void>(`/admin/trainings/modules/${encodeURIComponent(moduleId)}/lessons/reorder`, body).pipe(map(() => void 0));
   }
 
   orgUnfollowSector(orgId: string, sectorId: string): Observable<void> {
@@ -471,11 +556,17 @@ export class AdminService {
       .pipe(map(() => void 0));
   }
 
-  buildEbookFileUrl(fileName: string | null | undefined): string | null {
-    if (!fileName) {
+  buildEbookFileUrl(fileNameOrTrainingId: string | null | undefined, trainingId?: string): string | null {
+    // Se trainingId é fornecido, usar o endpoint /stream/ebooks/{trainingId}
+    if (trainingId) {
+      return this.api.createUrl(`/stream/ebooks/${encodeURIComponent(trainingId)}`);
+    }
+    
+    // Fallback para o endpoint anterior apenas com fileName (compatibilidade)
+    if (!fileNameOrTrainingId) {
       return null;
     }
-    return this.api.createUrl(`/admin/ebooks/${encodeURIComponent(fileName)}`);
+    return this.api.createUrl(`/admin/ebooks/${encodeURIComponent(fileNameOrTrainingId)}`);
   }
 
   /**
@@ -693,6 +784,7 @@ export class AdminService {
               id: String(l.id ?? l.lessonId ?? l._id ?? ''),
               title: l.title ?? l.name ?? 'Aula',
               content: l.content ?? l.url ?? null,
+              videoUrl: l.videoUrl ?? null,
               lessonOrder: l.lessonOrder ?? l.order ?? null
             }));
           })()

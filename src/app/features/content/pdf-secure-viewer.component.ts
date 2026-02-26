@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
+import { TrainingService } from '../../core/services/training.service';
 
 /**
  * Componente de visualização segura de PDF usando PDF.js puro.
@@ -271,9 +272,11 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   @Input() onPageChange: ((page: number, numPages?: number) => void) | null = null; // Callback quando página muda
 
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly trainingService = inject(TrainingService);
   private canvas: HTMLCanvasElement | null = null;
   private pdfDoc: any = null;
   private renderingPageNum = 0;
+  private blobUrl: string | null = null; // URL blob para limpeza posterior
 
   // Touch/pinch state
   private touchInitialDistance: number | null = null;
@@ -298,15 +301,55 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (!this.pdfUrl) {
-      this.error = 'URL do PDF não fornecida';
+    // Se trainingId foi fornecido, fazer download seguro do blob primeiro
+    if (this.trainingId) {
+      this.downloadAndLoadPdfBlob();
       return;
     }
+
+    // Fallback para pdfUrl direto
+    if (!this.pdfUrl) {
+      this.error = 'URL do PDF ou ID do treinamento não fornecido';
+      return;
+    }
+    
     // Calculate initial zoom based on screen size for better mobile/tablet experience
     const calculatedZoom = this.calculateInitialZoom();
     this.zoom = calculatedZoom;
     this.initialZoom = calculatedZoom;
     this.loadPdf(this.pdfUrl);
+  }
+
+  /**
+   * Download do PDF via HTTP (com autenticação via interceptor)
+   * Converte o blob em URL local e carrega no PDF.js
+   */
+  private downloadAndLoadPdfBlob(): void {
+    if (!this.trainingId) return;
+
+    this.loading = true;
+    this.error = null;
+
+    this.trainingService.getEbookBlob(this.trainingId).subscribe({
+      next: (blob: Blob) => {
+        // Criar URL blob local (não requer requisição HTTP)
+        this.blobUrl = URL.createObjectURL(blob);
+        
+        // Calculate initial zoom based on screen size
+        const calculatedZoom = this.calculateInitialZoom();
+        this.zoom = calculatedZoom;
+        this.initialZoom = calculatedZoom;
+        
+        // Carregar PDF usando a URL blob segura
+        this.loadPdf(this.blobUrl);
+      },
+      error: (err: any) => {
+        this.error = `Erro ao fazer download do PDF: ${err?.message || 'Erro desconhecido'}`;
+        this.loading = false;
+        this.cdr.markForCheck();
+        console.error('[PdfSecureViewer] Download error:', err);
+      }
+    });
   }
 
   private calculateInitialZoom(): number {
@@ -330,6 +373,11 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.pdfDoc) {
       this.pdfDoc.destroy();
+    }
+    // Limpar URL blob para liberar memória
+    if (this.blobUrl) {
+      URL.revokeObjectURL(this.blobUrl);
+      this.blobUrl = null;
     }
   }
 
@@ -378,8 +426,10 @@ export class PdfSecureViewerComponent implements OnInit, OnDestroy {
       }).promise
         .then(() => {
           this.pageNum = pageNum;
+          console.log('[PdfSecureViewer] Página renderizada:', pageNum, 'Callback disponível:', !!this.onPageChange);
           // Chamar callback quando página muda (inclui total de páginas)
           if (this.onPageChange) {
+            console.log('[PdfSecureViewer] Chamando onPageChange callback com página:', pageNum, 'total:', this.numPages);
             this.onPageChange(pageNum, this.numPages);
           }
           this.cdr.markForCheck();

@@ -1,0 +1,50 @@
+<section class="certificates-container">
+  <div class="container">
+    <div *ngIf="isLoading()" class="loading">Carregando certificados…</div>
+    <div *ngIf="error()" class="error">{{ error() }}</div>
+
+    <div class="certificates-grid">
+      <article class="grid-header">
+        <header>
+          <div class="header-content">
+            <div class="header-icon certificate-icon">
+              <i class="fas fa-certificate"></i>
+            </div>
+            <div>
+              <h1>Meus Certificados</h1>
+              <p>Visualize e baixe seus certificados de conclusão.</p>
+            </div>
+          </div>
+        </header>
+      </article>
+
+      <div class="grid" *ngIf="items().length > 0">
+        <article class="cert-card" *ngFor="let c of items()">
+          <div class="cover">
+            <img *ngIf="c.coverImageUrl; else placeholder" src="{{ c.coverImageUrl }}" alt="{{ c.courseTitle || 'Capa do curso' }}" title="{{ c.courseTitle || 'Capa do curso' }}" />
+            <ng-template #placeholder>
+              <div class="cover-placeholder"></div>
+            </ng-template>
+          </div>
+          <div class="body">
+            <h3>{{ c.courseTitle }}</h3>
+            <div class="issued">Emitido em: <span>{{ c.issuedAt || '—' }}</span></div>
+            
+            <div class="actions">
+              <button *ngIf="!c.certificateId" class="btn secondary" (click)="issueCertificate(c)">Emitir Certificado</button>
+              <button *ngIf="c.certificateId" class="btn primary" (click)="downloadCertificate(c)">Baixar Certificado</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading() && items().length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-inbox"></i>
+        </div>
+        <h3>Nenhum certificado disponível</h3>
+        <p>Para obter seu certificado, você deve concluir os cursos e treinamentos oferecidos pela plataforma.</p>
+      </div>
+    </div>
+  </div>
+</section>
