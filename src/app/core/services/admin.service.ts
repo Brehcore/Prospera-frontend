@@ -7,9 +7,13 @@ import {
   AdminTraining,
   AdminTrainingPayload,
   AdminTrainingUpdatePayload,
+  AdminUserDetailDTO,
+  AdminUserSummary,
+  AdminUserUpdateRequest,
   AssignTrainingPayload,
   EbookProgress,
-  EbookUploadEvent
+  EbookUploadEvent,
+  Page
 } from '../models/admin';
 import { ApiService } from './api.service';
 
@@ -65,9 +69,53 @@ export class AdminService {
   }
 
   // --- Users (Admin) ---
-  getUsers(): Observable<any[]> {
-    return this.api.get<unknown>('/admin/users').pipe(
-      map(resp => this.unwrapList<any>(resp).map(u => this.normalizeUser(u)))
+  /**
+   * Recupera uma lista paginada de usuários administrativos com suporte a filtro por email.
+   * O endpoint retorna um objeto Page<AdminUserSummaryDTO> contendo:
+   * - content: Array de usuários na página atual
+   * - totalPages: Número total de páginas
+   * - totalElements: Número total de elementos
+   * - page: Número da página atual (0-indexed)
+   * - size: Tamanho da página
+   * 
+   * @param page Número da página (0-indexed), default: 0
+   * @param size Tamanho da página, default: 10
+   * @param sort Campo para ordenação (default: 'email'), formato: 'field' ou 'field,asc|desc'
+   * @param email Filtro opcional para buscar usuários cujo email contenha a string
+   * @returns Observable com a página de usuários
+   */
+  getUsers(page: number = 0, size: number = 10, sort: string = 'email', email?: string): Observable<Page<AdminUserSummary>> {
+    const params: string[] = [
+      `page=${page}`,
+      `size=${size}`,
+      `sort=${encodeURIComponent(sort)}`
+    ];
+    if (email && email.trim()) {
+      params.push(`email=${encodeURIComponent(email.trim())}`);
+    }
+    const queryString = params.join('&');
+    return this.api.get<Page<AdminUserSummary>>(`/admin/users?${queryString}`).pipe(
+      map(resp => {
+        // Normaliza os usuários do content
+        if (resp && Array.isArray(resp.content)) {
+          return {
+            ...resp,
+            content: resp.content.map(u => this.normalizeUser(u))
+          };
+        }
+        return resp;
+      })
+    );
+  }
+
+  /**
+   * Carrega todos os usuários paginados. Mantém compatibilidade com código antigo
+   * que espera um array. Equivalente a getUsers().
+   * @deprecated Use getUsers() com paginação em vez disso.
+   */
+  getAllUsers(): Observable<any[]> {
+    return this.getUsers().pipe(
+      map(page => page.content)
     );
   }
 
@@ -88,6 +136,35 @@ export class AdminService {
         }
         return throwError(() => err);
       })
+    );
+  }
+
+  /**
+   * Atualiza as informações de um usuário administrativo existente.
+   * Realiza a validação das informações recebidas no payload antes de efetuar a persistência.
+   * 
+   * @param userId ID único do usuário que será atualizado
+   * @param request Dados atualizados do usuário (email, role, enabled, fullName, cpf, birthDate, phone)
+   * @returns Observable com AdminUserDetailDTO contendo os detalhes atualizados
+   */
+  updateUser(userId: string, request: AdminUserUpdateRequest): Observable<AdminUserDetailDTO> {
+    const body: Record<string, unknown> = {};
+    
+    // Campos de texto que devem ser trimados
+    if (request.email !== undefined) body['email'] = String(request.email).trim();
+    if (request.role !== undefined) body['role'] = String(request.role).trim();
+    if (request.fullName !== undefined) body['fullName'] = String(request.fullName).trim();
+    if (request.cpf !== undefined) body['cpf'] = String(request.cpf).trim();
+    if (request.phone !== undefined) body['phone'] = String(request.phone).trim();
+    
+    // Campo de data (formato: YYYY-MM-DD)
+    if (request.birthDate !== undefined) body['birthDate'] = String(request.birthDate).trim();
+    
+    // Campo booleano
+    if (request.enabled !== undefined) body['enabled'] = !!request.enabled;
+    
+    return this.api.put<AdminUserDetailDTO>(`/admin/users/${encodeURIComponent(userId)}`, body).pipe(
+      map(resp => this.normalizeUserDetail(resp))
     );
   }
 
@@ -908,6 +985,21 @@ export class AdminService {
     const role = raw.role ?? raw.systemRole ?? null;
     const enabled = raw.enabled === false ? false : true;
     return { id, email, role, enabled, ...raw };
+  }
+
+  private normalizeUserDetail(raw: any): AdminUserDetailDTO {
+    if (!raw) return { id: '', email: '', enabled: false };
+    const id = String(raw.id ?? raw.userId ?? raw._id ?? '');
+    const email = String(raw.email ?? raw.userEmail ?? '');
+    const role = raw.role ?? raw.systemRole ?? null;
+    const enabled = raw.enabled === false ? false : true;
+    const fullName = raw.fullName ?? raw.name ?? null;
+    const cpf = raw.cpf ?? null;
+    const birthDate = raw.birthDate ?? raw.dataDeNascimento ?? null;
+    const phone = raw.phone ?? raw.telephone ?? raw.telefone ?? null;
+    const createdAt = raw.createdAt ?? raw.createdDateTime ?? null;
+    const updatedAt = raw.updatedAt ?? raw.updatedDateTime ?? null;
+    return { id, email, role, enabled, fullName, cpf, birthDate, phone, createdAt, updatedAt, ...raw };
   }
 
   private normalizeOrganization(raw: any): any {

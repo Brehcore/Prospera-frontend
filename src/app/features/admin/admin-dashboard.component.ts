@@ -257,7 +257,9 @@ export class AdminDashboardComponent {
         next: res => {
           if (res['users'] !== undefined) {
             const u = res['users'];
-            this.users.set(Array.isArray(u) ? u.map(x => this.normalizeUser(x)) : this.unwrapList(u).map(x => this.normalizeUser(x)));
+            // getUsers() agora retorna Page<AdminUserSummary>, extrai content
+            const userList = Array.isArray(u) ? u : (u?.content || []);
+            this.users.set(userList);
           }
           if (res['plans'] !== undefined) {
             const p = res['plans'];
@@ -712,7 +714,7 @@ export class AdminDashboardComponent {
     if (!this.isSystemAdmin()) return;
     this.setLoading('users', true); this.setError('users', null);
     this.admin.getUsers().subscribe({
-      next: list => this.users.set(list as any),
+      next: page => this.users.set(page.content || []),
       error: err => this.setError('users', err?.message || 'Falha ao carregar usuários'),
       complete: () => this.setLoading('users', false)
     });
