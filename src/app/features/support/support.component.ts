@@ -26,6 +26,14 @@ export class SupportComponent {
 
   readonly topics$ = this.supportService.getSupportTopics();
 
+  readonly supportSubjects = [
+    { label: 'Dificuldades de acesso', value: 'ACCESS_DIFFICULTIES' },
+    { label: 'Conteúdos e Certificações', value: 'CONTENT_CERTIFICATIONS' },
+    { label: 'Financeiro e Faturamento', value: 'FINANCIAL_BILLING' },
+    { label: 'Instabilidade na Plataforma', value: 'PLATFORM_INSTABILITY' },
+    { label: 'Outros assuntos', value: 'OTHER' }
+  ];
+
   readonly contactChannels: ContactChannel[] = [
     {
       icon: 'fa-envelope',
@@ -35,29 +43,41 @@ export class SupportComponent {
       link: 'mailto:suporte@prospera.com.br'
     },
     {
+      icon: 'fa-envelope',
+      title: 'E-mail Comercial',
+      description: 'Para propostas e parcerias',
+      value: 'contato@gotreeconsultoria.com.br',
+      link: 'mailto:contato@gotreeconsultoria.com.br'
+    },
+    {
       icon: 'fa-phone',
       title: 'Telefone',
       description: 'Seg-Sex, 9h-18h',
-      value: '(11) 3000-0000'
+      value: '+55 (81) 98944-4164',
+      link: 'https://wa.me/5581989444164'
     },
-    {
-      icon: 'fa-comments',
-      title: 'Chat ao Vivo',
-      description: 'Atendimento imediato',
-      value: 'Disponível em horário comercial'
-    }
+    // Chat ao Vivo foi movido para o componente flutuante
   ];
 
   readonly supportForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
-    email: ['', [Validators.required, Validators.email]],
-    topic: ['access', Validators.required],
-    description: ['', [Validators.required, Validators.minLength(10)]]
+    userEmail: ['', [Validators.required, Validators.email]],
+    subject: [this.supportSubjects[0].value, Validators.required],
+    message: ['', [Validators.required, Validators.minLength(10)]]
   });
+
+  snackbarVisible = false;
+  snackbarMessage = '';
 
   isSubmitting = false;
   successMessage = '';
   errorMessage = '';
+
+  showSnackbar(message: string, duration = 5000): void {
+    this.snackbarMessage = message;
+    this.snackbarVisible = true;
+    setTimeout(() => (this.snackbarVisible = false), duration);
+  }
 
   submit(): void {
     if (this.supportForm.invalid) {
@@ -69,16 +89,27 @@ export class SupportComponent {
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.supportService.openSupportTicket(this.supportForm.getRawValue()).subscribe({
-      next: response => {
+    const payload = this.supportForm.getRawValue();
+
+    // Usar fetch() para evitar o HttpInterceptor que adicionaria JWT (rota pública)
+    fetch('http://localhost:8080/api/support/tickets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(async res => {
         this.isSubmitting = false;
-        this.successMessage = response.message;
-        this.supportForm.reset({ topic: 'access' });
-      },
-      error: error => {
+        if (res.ok) {
+          this.supportForm.reset({ subject: this.supportSubjects[0].value });
+          this.showSnackbar('Sua solicitação foi enviada com sucesso. Nossa equipe entrará em contato em breve.');
+        } else {
+          const err = await res.json().catch(() => null);
+          this.errorMessage = (err && err.message) || `Erro: ${res.status} ${res.statusText}`;
+        }
+      })
+      .catch(err => {
         this.isSubmitting = false;
-        this.errorMessage = error?.message ?? 'Não foi possível registrar o chamado.';
-      }
-    });
+        this.errorMessage = err?.message ?? 'Não foi possível registrar o chamado.';
+      });
   }
 }

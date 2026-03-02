@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { take } from 'rxjs';
+import { RouterLink, Router } from '@angular/router';
 import { SubscriptionService, UserSubscription, AccessStatus } from '../../core/services/subscription.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TrainingService, TrainingCatalogItemDTO, EnrollmentResponseDTO } from '../../core/services/training.service';
@@ -193,6 +194,7 @@ export class SubscriptionViewComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly trainingService = inject(TrainingService);
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
 
   // Trainings state
   readonly trainings = signal<TrainingCatalogItemDTO[] | null>(null);
@@ -389,35 +391,48 @@ export class SubscriptionViewComponent implements OnInit {
       this.updateCertificateError(enrollment.enrollmentId || '', 'ID da matrícula não disponível');
       return;
     }
-
-    this.issuingCertificateId.set(enrollment.enrollmentId);
-    this.updateCertificateError(enrollment.enrollmentId, null);
-
-    // Backend retorna um código de validação (string simples, não JSON)
-    this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollment.enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
-      next: (validationCode) => {
-        this.issuingCertificateId.set(null);
-        // Atualiza matrícula reconsultando enrollments para obter certificateId atualizado
-        this.trainingService.getMyEnrollments().subscribe({
-          next: (updatedEnrollments: any[]) => {
-            const updated = updatedEnrollments.find(e => e.enrollmentId === enrollment.enrollmentId);
-            if (updated) {
-              const enrollments = this.myEnrollments() || [];
-              const idx = enrollments.findIndex(e => e.enrollmentId === enrollment.enrollmentId);
-              if (idx >= 0) {
-                enrollments[idx] = updated;
-                this.myEnrollments.set([...enrollments]);
-              }
-            }
-          },
-          error: () => {}
-        });
-      },
-      error: (err) => {
-        this.issuingCertificateId.set(null);
-        const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
-        this.updateCertificateError(enrollment.enrollmentId || '', errMsg);
+    // Verificar completude do perfil antes de emitir
+    this.authService.user$.pipe(take(1)).subscribe(user => {
+      const hasName = !!(user?.fullName || user?.name);
+      const hasCpf = !!(user?.cpf || user?.document || user?.cpfNumber || user?.documentNumber);
+      if (!hasName || !hasCpf) {
+        const proceed = window.confirm('Seu perfil não está completo. Se continuar, o certificado será emitido apenas com seu e-mail. Deseja continuar?');
+        if (!proceed) {
+          this.router.navigate(['/conta']);
+          return;
+        }
       }
+
+      const id = enrollment.enrollmentId ?? '';
+      this.issuingCertificateId.set(id || null);
+      this.updateCertificateError(id, null);
+
+      // Backend retorna um código de validação (string simples, não JSON)
+      this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(id)}`, {}, { responseType: 'text' as any }).subscribe({
+        next: (validationCode) => {
+          this.issuingCertificateId.set(null);
+          // Atualiza matrícula reconsultando enrollments para obter certificateId atualizado
+          this.trainingService.getMyEnrollments().subscribe({
+            next: (updatedEnrollments: any[]) => {
+              const updated = updatedEnrollments.find(e => e.enrollmentId === id);
+              if (updated) {
+                const enrollments = this.myEnrollments() || [];
+                const idx = enrollments.findIndex(e => e.enrollmentId === id);
+                if (idx >= 0) {
+                  enrollments[idx] = updated;
+                  this.myEnrollments.set([...enrollments]);
+                }
+              }
+            },
+            error: () => {}
+          });
+        },
+        error: (err) => {
+          this.issuingCertificateId.set(null);
+          const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
+          this.updateCertificateError(id, errMsg);
+        }
+      });
     });
   }
 

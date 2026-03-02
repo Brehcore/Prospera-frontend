@@ -40,7 +40,7 @@ export interface Plan {
     </ng-template>
 
     <div class="plan-actions">
-      <a class="btn btn-primary" routerLink="/contato">Falar com um especialista</a>
+      <a class="btn btn-primary" routerLink="/suporte">Falar com um especialista</a>
     </div>
   </article>
   `,

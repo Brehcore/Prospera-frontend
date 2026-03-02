@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, OnDestroy, signal, ViewChild, ElementRef, DestroyRef } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -3459,22 +3460,35 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.issuingCertificate.set(true);
-    this.certificateError.set(null);
-
-    // Call API to issue certificate using enrollmentId
-    // Backend retorna um código de validação (string simples, não JSON)
-    this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
-      next: (validationCode) => {
-        this.issuingCertificate.set(false);
-        this.showSaveMessage('Certificado gerado com sucesso! Uma cópia em PDF também foi enviada para o seu e-mail.');
-        this.closeCelebration();
-      },
-      error: (err) => {
-        this.issuingCertificate.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
-        this.certificateError.set(errMsg);
+    // Verificar completude do perfil antes de emitir
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      const hasName = !!(user?.fullName || user?.name);
+      const hasCpf = !!(user?.cpf || user?.document || user?.cpfNumber || user?.documentNumber);
+      if (!hasName || !hasCpf) {
+        const proceed = window.confirm('Seu perfil não está completo. Se continuar, o certificado será emitido apenas com seu e-mail. Deseja continuar?');
+        if (!proceed) {
+          this.router.navigate(['/conta']);
+          return;
+        }
       }
+
+      this.issuingCertificate.set(true);
+      this.certificateError.set(null);
+
+      // Call API to issue certificate using enrollmentId
+      // Backend retorna um código de validação (string simples, não JSON)
+      this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
+        next: (validationCode) => {
+          this.issuingCertificate.set(false);
+          this.showSaveMessage('Certificado gerado com sucesso! Uma cópia em PDF também foi enviada para o seu e-mail.');
+          this.closeCelebration();
+        },
+        error: (err) => {
+          this.issuingCertificate.set(false);
+          const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
+          this.certificateError.set(errMsg);
+        }
+      });
     });
   }
 
@@ -3501,28 +3515,41 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.issuingCertificate.set(true);
-    this.certificateError.set(null);
-
-    // Backend retorna um código de validação (string simples, não JSON)
-    this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
-      next: (validationCode) => {
-        this.issuingCertificate.set(false);
-        this.showSaveMessage('Certificado gerado com sucesso! Uma cópia em PDF também foi enviada para o seu e-mail.');
-        // Atualiza matrícula localmente reconsultando enrollments para obter certificateId
-        this.trainingService.getMyEnrollments().subscribe({
-          next: (enrollments: any[]) => {
-            const updated = enrollments.find(e => String(e.trainingId) === String(this.trainingId()));
-            if (updated) this.enrollmentInfo.set(updated);
-          },
-          error: () => {}
-        });
-      },
-      error: (err) => {
-        this.issuingCertificate.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
-        this.certificateError.set(errMsg);
+    // Verificar completude do perfil antes de emitir
+    this.auth.user$.pipe(take(1)).subscribe(user => {
+      const hasName = !!(user?.fullName || user?.name);
+      const hasCpf = !!(user?.cpf || user?.document || user?.cpfNumber || user?.documentNumber);
+      if (!hasName || !hasCpf) {
+        const proceed = window.confirm('Seu perfil não está completo. Se continuar, o certificado será emitido apenas com seu e-mail. Deseja continuar?');
+        if (!proceed) {
+          this.router.navigate(['/conta']);
+          return;
+        }
       }
+
+      this.issuingCertificate.set(true);
+      this.certificateError.set(null);
+
+      // Backend retorna um código de validação (string simples, não JSON)
+      this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
+        next: (validationCode) => {
+          this.issuingCertificate.set(false);
+          this.showSaveMessage('Certificado gerado com sucesso! Uma cópia em PDF também foi enviada para o seu e-mail.');
+          // Atualiza matrícula localmente reconsultando enrollments para obter certificateId
+          this.trainingService.getMyEnrollments().subscribe({
+            next: (enrollments: any[]) => {
+              const updated = enrollments.find(e => String(e.trainingId) === String(this.trainingId()));
+              if (updated) this.enrollmentInfo.set(updated);
+            },
+            error: () => {}
+          });
+        },
+        error: (err) => {
+          this.issuingCertificate.set(false);
+          const errMsg = err?.error?.message || err?.message || 'Erro ao emitir certificado';
+          this.certificateError.set(errMsg);
+        }
+      });
     });
   }
 

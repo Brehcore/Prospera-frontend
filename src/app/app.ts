@@ -10,11 +10,12 @@ import { FooterComponent } from './shared/components/layout/footer/footer.compon
 import { HeaderComponent } from './shared/components/layout/header/header.component';
 import { AuthModalComponent } from './features/auth/auth-modal/auth-modal.component';
 import { CatalogDetailsModalComponent } from './shared/components/catalog-details-modal/catalog-details-modal.component';
+import { FloatingChatComponent } from './shared/components/floating-chat/floating-chat.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, AuthModalComponent, CatalogDetailsModalComponent, AsyncPipe],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, AuthModalComponent, CatalogDetailsModalComponent, AsyncPipe, FloatingChatComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
@@ -28,7 +29,6 @@ export class App {
     { label: 'Início', route: '/' },
 	{ label: 'Catálogo', route: '/catalog' },
     { label: 'Planos', route: '/planos' },
-    { label: 'Contato', route: '/contato' },
     { label: 'Suporte', route: '/suporte' },
     { label: 'FAQ', route: '/faq' }
   ];
@@ -110,7 +110,7 @@ export class App {
       links: [
         { label: 'Sobre a Prospera', route: '/sobre' },
         { label: 'Políticas e LGPD', route: '/politicas' },
-        { label: 'Fale conosco', route: '/contato' }
+        { label: 'Fale conosco', route: '/suporte' }
       ]
     }
   ];

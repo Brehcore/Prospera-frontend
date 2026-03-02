@@ -39,10 +39,25 @@
             <td data-label="Role">{{u.role || '—'}}</td>
             <td data-label="Status"><span class="badge" [class.badge-active]="u.enabled" [class.badge-inactive]="!u.enabled">{{u.enabled? 'Ativo':'Inativo'}}</span></td>
             <td data-label="Ações" class="actions-col">
-              <button type="button" class="btn-ghost-small" (click)="toggleUserEnabled(u)" [disabled]="loading()['userToggle']">
-                {{ u.enabled ? 'Inativar' : 'Ativar' }}
-              </button>
-              <button type="button" class="btn-ghost-small" (click)="$event.stopPropagation(); viewUserDetails(u)">Detalhes</button>
+              <div class="icon-actions" role="group" aria-label="Ações do usuário">
+                <button type="button" class="icon-btn" (click)="toggleUserEnabled(u)" [disabled]="loading()['userToggle']" [attr.aria-pressed]="!u.enabled" [attr.title]="u.enabled ? 'Inativar usuário' : 'Ativar usuário'">
+                  <!-- Power / toggle SVG -->
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M13 3h-2v10h2V3zM7.07 6.28a8 8 0 1 0 9.86 0l-1.4 1.43a6 6 0 1 1-7.06 0L7.07 6.28z" fill="currentColor"/></svg>
+                  <span class="icon-tooltip">{{ u.enabled ? 'Inativar' : 'Ativar' }}</span>
+                </button>
+
+                <button type="button" class="icon-btn" (click)="$event.stopPropagation(); viewUserDetails(u)" title="Ver detalhes" aria-label="Detalhes do usuário">
+                  <!-- Info SVG -->
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.75 15h-1.5v-6h1.5v6zm0-8h-1.5V7h1.5v2z" fill="currentColor"/></svg>
+                  <span class="icon-tooltip">Detalhes</span>
+                </button>
+
+                <button type="button" class="icon-btn" (click)="$event.stopPropagation(); openEditUser(u)" title="Editar usuário" aria-label="Editar usuário">
+                  <!-- Edit SVG -->
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+                  <span class="icon-tooltip">Editar</span>
+                </button>
+              </div>
             </td>
           </tr>
           <tr *ngIf="!filteredUsers().length">
@@ -104,6 +119,32 @@
             </div>
           </div>
         </div>
+        <!-- Edit User Modal -->
+        <div class="overlay" *ngIf="showEditUser()" (click)="closeEditUser()"></div>
+        <div class="create-modal" *ngIf="showEditUser()" role="dialog" aria-modal="true" aria-label="Editar usuário" (click)="$event.stopPropagation()">
+          <h3>Editar Usuário</h3>
+          <form (submit)="$event.preventDefault(); submitEditUser();">
+            <label>Nome Completo<span>*</span>
+              <input type="text" required [value]="editUserForm().fullName" (input)="updateEditUserField('fullName', $any($event.target).value)" />
+            </label>
+            <label>E-mail<span>*</span>
+              <input type="email" required [value]="editUserForm().email" (input)="updateEditUserField('email', $any($event.target).value)" />
+            </label>
+            <label>CPF
+              <input type="text" [value]="editUserForm().cpf" (input)="updateEditUserField('cpf', $any($event.target).value)" />
+            </label>
+            <label>Data de Nascimento
+              <input type="date" [value]="editUserForm().birthDate" (input)="updateEditUserField('birthDate', $any($event.target).value)" />
+            </label>
+            <label>Telefone
+              <input type="tel" [value]="editUserForm().phone" (input)="updateEditUserField('phone', $any($event.target).value)" />
+            </label>
+            <div class="actions-row modal-actions">
+              <button type="button" class="btn btn--subtle" (click)="closeEditUser()">Cancelar</button>
+              <button type="submit" class="btn btn--primary" [disabled]="loading()['userUpdate']">{{ loading()['userUpdate'] ? 'Salvando...' : 'Salvar' }}</button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -139,8 +180,19 @@
             <td data-label="Membros">{{o.memberCount ?? 0}}</td>
             <td data-label="Status"><span class="badge" [class.badge-active]="o.enabled" [class.badge-inactive]="!o.enabled">{{o.enabled? 'Ativa':'Inativa'}}</span></td>
             <td data-label="Ações" class="actions-col">
-              <button type="button" class="btn-ghost-small" (click)="viewOrganizationDetails(o); $event.stopPropagation()">Detalhes</button>
-              <button type="button" class="btn-ghost-small" (click)="toggleOrganizationEnabled(o)" [disabled]="loading()['orgToggle']">{{ o.enabled ? 'Inativar' : 'Ativar' }}</button>
+              <div class="icon-actions" role="group" aria-label="Ações da organização">
+                <button type="button" class="icon-btn" (click)="$event.stopPropagation(); toggleOrganizationEnabled(o)" [disabled]="loading()['orgToggle']" [attr.aria-pressed]="!o.enabled" [attr.title]="o.enabled ? 'Inativar organização' : 'Ativar organização'">
+                  <!-- Power / toggle SVG (same as users) -->
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M13 3h-2v10h2V3zM7.07 6.28a8 8 0 1 0 9.86 0l-1.4 1.43a6 6 0 1 1-7.06 0L7.07 6.28z" fill="currentColor"/></svg>
+                  <span class="icon-tooltip">{{ o.enabled ? 'Inativar' : 'Ativar' }}</span>
+                </button>
+
+                <button type="button" class="icon-btn" (click)="$event.stopPropagation(); viewOrganizationDetails(o)" title="Ver detalhes" aria-label="Detalhes da organização">
+                  <!-- Info SVG (same as users) -->
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.75 15h-1.5v-6h1.5v6zm0-8h-1.5V7h1.5v2z" fill="currentColor"/></svg>
+                  <span class="icon-tooltip">Detalhes</span>
+                </button>
+              </div>
             </td>
           </tr>
           <tr *ngIf="!filteredOrganizations().length">

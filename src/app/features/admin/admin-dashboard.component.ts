@@ -9,6 +9,7 @@ import { SubscriptionService } from '../../core/services/subscription.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminTraining, AdminSector } from '../../core/models/admin';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Validators } from '@angular/forms';
 
 interface AdminUserSummary {
   id: string;
@@ -74,6 +75,9 @@ export class AdminDashboardComponent {
   users = signal<AdminUserSummary[]>([]);
   selectedUserId = signal<string | null>(null);
   selectedUserDetails = signal<any | null>(null);
+  // Edit user modal signals
+  showEditUser = signal<boolean>(false);
+  editUserForm = signal<{ fullName: string; cpf: string; birthDate: string; phone: string; email: string }>({ fullName: '', cpf: '', birthDate: '', phone: '', email: '' });
   filteredUsers = computed(() => {
     const list = this.users();
     const term = this.userSearch().trim().toLowerCase();
@@ -744,6 +748,68 @@ export class AdminDashboardComponent {
       error: err => this.setError('userDetails', err?.message || 'Falha ao carregar detalhes'),
       complete: () => this.setLoading('userDetails', false)
     });
+  }
+
+  openEditUser(user: AdminUserSummary) {
+    if (!user?.id) return;
+    this.setLoading('userDetails', true); this.setError('userDetails', null);
+    this.admin.getUserById(user.id).subscribe({
+      next: detail => {
+        const p = detail?.personalProfile ?? detail;
+        this.editUserForm.set({
+          fullName: String(p?.fullName ?? p?.full_name ?? '') || '',
+          cpf: String(p?.cpf ?? p?.document ?? '') || '',
+          birthDate: String(p?.birthDate ?? p?.dataDeNascimento ?? '') || '',
+          phone: String(p?.phone ?? p?.telefone ?? '') || '',
+          email: String(detail?.email ?? detail?.userEmail ?? '') || ''
+        });
+        this.selectedUserId.set(user.id);
+        this.showEditUser.set(true);
+      },
+      error: err => this.setError('userDetails', err?.message || 'Falha ao carregar usuário'),
+      complete: () => this.setLoading('userDetails', false)
+    });
+  }
+
+  closeEditUser() {
+    this.showEditUser.set(false);
+    this.selectedUserId.set(null);
+    this.editUserForm.set({ fullName: '', cpf: '', birthDate: '', phone: '', email: '' });
+  }
+
+  submitEditUser() {
+    const id = this.selectedUserId();
+    if (!id) return;
+    const f = this.editUserForm();
+    // basic validation
+    if (!f.fullName.trim() || !f.email.trim()) {
+      alert('Nome e e-mail são obrigatórios.');
+      return;
+    }
+    this.setLoading('userUpdate', true);
+    this.admin.updateUser(id, {
+      fullName: f.fullName.trim(),
+      cpf: f.cpf ? String(f.cpf).trim() : undefined,
+      birthDate: f.birthDate ? String(f.birthDate).trim() : undefined,
+      phone: f.phone ? String(f.phone).trim() : undefined,
+      email: f.email.trim()
+    } as any).subscribe({
+      next: updated => {
+        // atualizar lista local
+        this.users.update(list => list.map(u => u.id === id ? ({ ...u, email: updated.email || u.email }) : u));
+        // atualizar detalhes abertos
+        this.selectedUserDetails.set(updated as any);
+        this.closeEditUser();
+      },
+      error: err => {
+        this.setError('userDetails', err?.message || 'Falha ao atualizar usuário');
+      },
+      complete: () => this.setLoading('userUpdate', false)
+    });
+  }
+
+  updateEditUserField(field: string, value: string) {
+    this.editUserForm.update(f => ({ ...f, [field]: value } as any));
   }
 
   closeUserDetails() {

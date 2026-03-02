@@ -78,8 +78,8 @@ export const routes: Routes = [
 	},
 	{
 		path: 'contato',
-		loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent),
-		data: { title: 'Contato' }
+		redirectTo: 'suporte',
+		pathMatch: 'full'
 	},
 	{
 		path: 'sobre',

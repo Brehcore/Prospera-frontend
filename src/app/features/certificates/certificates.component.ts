@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
+import { take } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface CertificateItem {
   id: string;
@@ -31,7 +33,8 @@ export class CertificatesComponent {
 
   constructor(
     private readonly apiService: ApiService,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -66,10 +69,23 @@ export class CertificatesComponent {
 
   issueCertificate(item: CertificateItem): void {
     if (!item.enrollmentId) return;
-    // Backend retorna um código de validação (string simples, não JSON)
-    this.apiService.post<string>(`/api/certificates/issue/${item.enrollmentId}`, {}, { responseType: 'text' as any }).subscribe({
-      next: (validationCode) => this.load(),
-      error: err => console.error('[Certificates] issue failed', err)
+
+    this.authService.user$.pipe(take(1)).subscribe(user => {
+      const hasName = !!(user?.fullName || user?.name);
+      const hasCpf = !!(user?.cpf || user?.document || user?.cpfNumber || user?.documentNumber);
+      if (!hasName || !hasCpf) {
+        const proceed = window.confirm('Seu perfil não está completo. Se continuar, o certificado será emitido apenas com seu e-mail. Deseja continuar?');
+        if (!proceed) {
+          window.location.href = '/conta';
+          return;
+        }
+      }
+
+      // Backend retorna um código de validação (string simples, não JSON)
+      this.apiService.post<string>(`/api/certificates/issue/${item.enrollmentId}`, {}, { responseType: 'text' as any }).subscribe({
+        next: (validationCode) => this.load(),
+        error: err => console.error('[Certificates] issue failed', err)
+      });
     });
   }
 

@@ -37,17 +37,34 @@ import { take } from 'rxjs';
               <div class="training-content">
                 <h3 class="training-title">{{ t.title }}</h3>
                 <div class="training-meta-items">
-                  <p class="meta-item" *ngIf="t.description">
-                    <i class="fas fa-book" aria-hidden="true"></i>
-                    {{ t.description }}
-                  </p>
+                  <ng-container *ngIf="findEnrollment(t.id || t['trainingId']) as en; else showDescription">
+                    <p class="meta-item">
+                      <i class="fas fa-book" aria-hidden="true"></i>
+                      {{ (en.progressPercentage !== undefined && en.progressPercentage !== null) ? (en.progressPercentage + '% completo') : '0% completo' }}
+                    </p>
+                  </ng-container>
+                  <ng-template #showDescription>
+                    <p class="meta-item" *ngIf="t.description">
+                      <i class="fas fa-book" aria-hidden="true"></i>
+                      {{ t.description }}
+                    </p>
+                  </ng-template>
                 </div>
               </div>
               <div class="training-actions">
-                <button class="btn btn-secondary" (click)="$event.stopPropagation()" disabled>Detalhes</button>
-                <button class="btn btn-primary" (click)="enroll(t.id)" [disabled]="isEnrolled(t.id)">
-                  {{ isEnrolled(t.id) ? 'Matriculado' : 'Matricular' }}
-                </button>
+                <button class="btn btn-secondary" (click)="$event.stopPropagation(); openDetails(t.id || t['trainingId'])">Detalhes</button>
+                <ng-container *ngIf="isEnrolled(t.id || t['trainingId']); else enrollBtn">
+                  <button class="btn btn-primary" (click)="$event.stopPropagation(); openTraining(t.id || t['trainingId'])">Acessar</button>
+                </ng-container>
+                <ng-template #enrollBtn>
+                  <button class="btn btn-primary" (click)="$event.stopPropagation(); enroll(t.id || t['trainingId'])" [disabled]="isEnrolled(t.id || t['trainingId'])">Matricular</button>
+                </ng-template>
+              </div>
+              <div class="training-progress-wrap" *ngIf="findEnrollment(t.id || t['trainingId']) as en">
+                <div class="training-progress-bar" *ngIf="en.progressPercentage !== undefined && en.progressPercentage !== null">
+                  <div class="training-progress-fill" [style.width.%]="en.progressPercentage"></div>
+                </div>
+                <p class="training-progress-label" *ngIf="en.progressPercentage !== undefined && en.progressPercentage !== null">{{ en.progressPercentage }}% completo</p>
               </div>
             </article>
           </div>
@@ -126,21 +143,28 @@ export class TrainingsComponent implements OnInit {
   readonly error = signal<string | null>(null);
 
   readonly myEnrollments = signal<EnrollmentResponseDTO[] | null>(null);
+  readonly enrollmentProgress = signal<Record<string, number | null>>({});
 
   ngOnInit(): void {
     this.load();
     this.loadEnrollments();
   }
 
-  openTraining(enrollment: EnrollmentResponseDTO) {
-    const id = enrollment.trainingId || enrollment.enrollmentId || '';
+  openTraining(enrollmentOrId?: EnrollmentResponseDTO | string) {
+    let id = '';
+    if (!enrollmentOrId) return;
+    if (typeof enrollmentOrId === 'string') id = enrollmentOrId;
+    else id = enrollmentOrId.trainingId || enrollmentOrId.enrollmentId || '';
     if (!id) return;
     // Abrir página de detalhe do treinamento para usuários logados
     this.router.navigate(['/treinamento', id]);
   }
 
-  openDetails(enrollment: EnrollmentResponseDTO) {
-    const id = enrollment.trainingId || enrollment.enrollmentId || '';
+  openDetails(enrollmentOrId: EnrollmentResponseDTO | string) {
+    let id = '';
+    if (!enrollmentOrId) return;
+    if (typeof enrollmentOrId === 'string') id = enrollmentOrId;
+    else id = enrollmentOrId.trainingId || enrollmentOrId.enrollmentId || '';
     if (!id) return;
     this.catalogService.loadCatalog().pipe(take(1)).subscribe({
       next: (items: CatalogItem[]) => {
@@ -169,10 +193,17 @@ export class TrainingsComponent implements OnInit {
   }
 
   enroll(trainingId: string) {
+    if (!trainingId) {
+      console.warn('[Trainings] enroll called without trainingId');
+      return;
+    }
+
     this.trainingService.enrollInTraining(trainingId).subscribe({
       next: resp => {
         const current = this.myEnrollments() ?? [];
         this.myEnrollments.set([...(current || []), resp]);
+        // Recarregar lista de matrículas do backend (retorna progressPercentage corretamente)
+        this.loadEnrollments();
         console.debug('[Trainings] matriculado', resp);
       },
       error: err => console.warn('[Trainings] erro ao matricular', err)
@@ -182,15 +213,57 @@ export class TrainingsComponent implements OnInit {
   loadEnrollments() {
     this.myEnrollments.set(null);
     this.trainingService.getMyEnrollments().subscribe({
-      next: items => this.myEnrollments.set(items || []),
+      next: items => {
+        const list = items || [];
+        this.myEnrollments.set(list);
+        this.fetchMissingProgressForEnrollments(list);
+      },
       error: err => { console.warn('[Trainings] erro ao carregar matrículas', err); this.myEnrollments.set([]); }
     });
   }
 
-  isEnrolled(trainingId: string) {
-    const e = this.myEnrollments() ?? [];
-    return e.some(x => x.trainingId === trainingId);
+  private fetchMissingProgressForEnrollments(enrollments: EnrollmentResponseDTO[] | null) {
+    const list = enrollments ?? [];
+    for (const e of list) {
+      const tid = String(e.trainingId ?? e.enrollmentId ?? '');
+      if (!tid) continue;
+      const already = this.enrollmentProgress()[tid];
+      if ((e.progressPercentage === undefined || e.progressPercentage === null) && already === undefined) {
+        this.enrollmentProgress.update(prev => ({ ...prev, [tid]: null }));
+        this.trainingService.getEbookProgress(tid).pipe(take(1)).subscribe({
+          next: p => {
+            let pct: number | null = null;
+            if (p == null) pct = null;
+            else if (p.progressPercentage !== undefined && p.progressPercentage !== null) pct = p.progressPercentage;
+            else if (p.lastPageRead !== undefined && p.totalPages !== undefined && p.totalPages > 0) {
+              pct = Math.round((p.lastPageRead / p.totalPages) * 10000) / 100; // two decimals
+            }
+            this.enrollmentProgress.update(prev => ({ ...prev, [tid]: pct }));
+          },
+          error: () => this.enrollmentProgress.update(prev => ({ ...prev, [tid]: null }))
+        });
+      }
+    }
   }
 
-  trackById(_: number, item: TrainingCatalogItemDTO) { return item?.id; }
+
+  isEnrolled(trainingId: string) {
+    if (!trainingId) return false;
+    const e = this.myEnrollments() ?? [];
+    const tid = String(trainingId);
+    return e.some(x => String(x.trainingId ?? '') === tid);
+  }
+
+  findEnrollment(trainingId: string): EnrollmentResponseDTO | undefined {
+    const e = this.myEnrollments() ?? [];
+    if (!trainingId) return undefined;
+    const tid = String(trainingId);
+    const found = e.find(x => String(x.trainingId ?? '') === tid || String(x.enrollmentId ?? '') === tid);
+    if (!found) return undefined;
+    const key = String(found.trainingId ?? found.enrollmentId ?? '');
+    const progress = this.enrollmentProgress()[key];
+    return { ...found, progressPercentage: found.progressPercentage ?? progress };
+  }
+
+  trackById(_: number, item: TrainingCatalogItemDTO) { return item?.id || (item as any)?.trainingId; }
 }

@@ -1,7 +1,7 @@
 <section class="catalog-hero">
   <div class="hero-content">
     <h1>Catálogo de Conteúdos</h1>
-    <p>Explore e-books, cursos gravados e treinamentos ao vivo disponíveis para sua equipe.</p>
+    <p>Explore e-books e cursos gravados disponíveis para sua equipe.</p>
   </div>
 </section>
 
@@ -29,16 +29,6 @@
             (click)="selectFormat('RECORDED_COURSE')"
           >
             Cursos gravados
-          </button>
-          <button
-            type="button"
-            [class.active]="selectedFormat === 'LIVE_TRAINING'"
-            (click)="selectFormat('LIVE_TRAINING')"
-          >
-            Ao vivo
-          </button>
-          <button type="button" [class.active]="selectedFormat === 'PACKAGE'" (click)="selectFormat('PACKAGE')">
-            Pacotes
           </button>
         </div>
       </div>

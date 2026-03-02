@@ -1,0 +1,22 @@
+<div class="floating-chat" [class.open]="open()">
+  <div class="chat-panel" *ngIf="open()">
+    <div class="panel-header">
+      <div class="icon">
+        <i class="fas fa-comments"></i>
+      </div>
+      <div class="title">Chat ao Vivo</div>
+      <button class="close" (click)="toggle()">×</button>
+    </div>
+    <div class="panel-body">
+      <p>Atendimento imediato — disponível em horário comercial.</p>
+      <div class="actions">
+        <button class="btn btn-primary" (click)="openSupport()">Abrir Central de Suporte</button>
+        <a class="link" href="mailto:suporte@prospera.com.br">Enviar e-mail</a>
+      </div>
+    </div>
+  </div>
+
+  <button class="chat-button" aria-label="Abrir chat" (click)="openWhatsApp()" *ngIf="!open()">
+    <i class="fas fa-comments"></i>
+  </button>
+</div>

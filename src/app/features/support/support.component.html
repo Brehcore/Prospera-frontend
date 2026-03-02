@@ -117,33 +117,33 @@
           <input 
             id="supportEmail" 
             type="email" 
-            formControlName="email" 
+            formControlName="userEmail" 
             placeholder="seu.email@empresa.com"
-            [class.has-error]="supportForm.get('email')?.invalid && supportForm.get('email')?.touched"
+            [class.has-error]="supportForm.get('userEmail')?.invalid && supportForm.get('userEmail')?.touched"
           />
-          <small class="error" *ngIf="supportForm.get('email')?.invalid && supportForm.get('email')?.touched">
+          <small class="error" *ngIf="supportForm.get('userEmail')?.invalid && supportForm.get('userEmail')?.touched">
             <i class="fas fa-exclamation-circle"></i>
             Informe um e-mail válido.
           </small>
         </div>
 
         <div class="form-field">
-          <label for="supportTopic">Categoria *</label>
-          <select id="supportTopic" formControlName="topic">
-            <option *ngFor="let topic of topics$ | async" [ngValue]="topic.id">{{ topic.label }}</option>
+          <label for="supportSubject">Categoria *</label>
+          <select id="supportSubject" formControlName="subject">
+            <option *ngFor="let s of supportSubjects" [value]="s.value">{{ s.label }}</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="supportDescription">Descrição do problema *</label>
+          <label for="supportMessage">Descrição do problema *</label>
           <textarea 
-            id="supportDescription" 
+            id="supportMessage" 
             rows="5" 
-            formControlName="description" 
+            formControlName="message" 
             placeholder="Compartilhe detalhes sobre o que está acontecendo..."
-            [class.has-error]="supportForm.get('description')?.invalid && supportForm.get('description')?.touched"
+            [class.has-error]="supportForm.get('message')?.invalid && supportForm.get('message')?.touched"
           ></textarea>
-          <small class="error" *ngIf="supportForm.get('description')?.invalid && supportForm.get('description')?.touched">
+          <small class="error" *ngIf="supportForm.get('message')?.invalid && supportForm.get('message')?.touched">
             <i class="fas fa-exclamation-circle"></i>
             Informe uma descrição com pelo menos 10 caracteres.
           </small>
@@ -164,6 +164,7 @@
             {{ errorMessage }}
           </p>
         </div>
+        <div class="snackbar" *ngIf="snackbarVisible">{{ snackbarMessage }}</div>
       </form>
     </div>
   </div>

@@ -178,6 +178,16 @@
 
 /* Modal inputs refinados */
 .create-modal input[type=text], .create-modal textarea, .create-modal select { background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.05); }
+
+/* Icon action buttons (compact, accessible, with tooltip) */
+.icon-actions { display:flex; gap:.45rem; align-items:center; }
+.icon-btn { position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; border:1px solid #e6eef8; background:linear-gradient(180deg,#ffffff,#f8fafc); color:#0f172a; cursor:pointer; padding:6px; transition:all .15s; }
+.icon-btn svg { width:18px; height:18px; display:block; }
+.icon-btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px -8px rgba(16,24,40,.08); }
+.icon-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.icon-tooltip { position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%) translateY(6px); background:#111827; color:#fff; padding:.35rem .5rem; font-size:.68rem; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .12s, transform .12s; z-index:1200; }
+.icon-btn:focus .icon-tooltip, .icon-btn:hover .icon-tooltip { opacity:1; transform:translateX(-50%) translateY(0); }
+.icon-tooltip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); width:8px; height:8px; background:#111827; transform:translateX(-50%) rotate(45deg); border-radius:1px; }
 .create-modal input[type=text]:focus, .create-modal textarea:focus, .create-modal select:focus { outline:2px solid #6366f1; outline-offset:1px; background:#ffffff; }
 .create-modal label span { color:#dc2626; margin-left:.25rem; }
 
