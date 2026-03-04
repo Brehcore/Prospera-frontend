@@ -2,8 +2,6 @@
 
 .training-card {
   width: 100%;
-  max-width: 350px;
-  height: 280px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -13,7 +11,16 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 0 auto;
+}
+
+/* Conta Personal - menos informações, capa mais pequena */
+.training-card--personal {
+  height: 220px;
+}
+
+/* Conta Organizacional - mais informações, capa maior */
+.training-card--org {
+  height: 280px;
 }
 
 .training-card:hover {
@@ -24,7 +31,7 @@
 /* Grid com espaçamento */
 .training-catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 24px;
   padding: 20px 0;
   width: 100%;
@@ -39,6 +46,15 @@
   background: #f3f4f6;
   display: block;
   overflow: hidden;
+}
+
+/* Variantes por tipo de conta: personal mostra mais capa, org reduz altura da capa para caber mais metadados */
+.training-card--personal .training-image {
+  height: 180px;
+}
+
+.training-card--org .training-image {
+  height: 110px;
 }
 
 .training-image .cover {
@@ -99,6 +115,14 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.training-card--personal .training-title {
+  max-height: 64px;
+}
+
+.training-card--org .training-title {
+  max-height: 48px;
 }
 
 /* AUTOR Section */

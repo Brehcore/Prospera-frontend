@@ -13,6 +13,7 @@ export interface TrainingCatalogItemDTO {
   type: string;
   enrollmentStatus: string;
   coverImageUrl?: string | null;
+  sectorNames?: string[] | null;
 }
 
 export interface EnrollmentResponseDTO {

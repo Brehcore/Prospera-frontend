@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PublicationStatusPipe } from '../../core/pipes/publication-status.pipe';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 import { forkJoin } from 'rxjs';
 import { AdminService } from '../../core/services/admin.service';
 import { CatalogService } from '../../core/services/catalog.service';
@@ -31,7 +32,7 @@ interface AdminOrganizationSummary {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, RouterModule, ReactiveFormsModule, PublicationStatusPipe],
+  imports: [CommonModule, NgIf, NgFor, RouterModule, ReactiveFormsModule, PublicationStatusPipe, PaginationComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
@@ -45,6 +46,8 @@ export class AdminDashboardComponent {
   trainings = signal<AdminTraining[]>([]);
   trainingSearch = signal<string>('');
   trainingStatusFilter = signal<'all'|'published'|'draft'>('all');
+  trainingCurrentPage = signal<number>(1);
+  trainingPageSize = signal<number>(10);
   filteredTrainings = computed(() => {
     const term = this.trainingSearch().trim().toLowerCase();
     const status = this.trainingStatusFilter();
@@ -58,6 +61,15 @@ export class AdminDashboardComponent {
       return true;
     });
   });
+  paginatedTrainings = computed(() => {
+    const filtered = this.filteredTrainings();
+    const page = this.trainingCurrentPage();
+    const pageSize = this.trainingPageSize();
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filtered.slice(start, end);
+  });
+  totalTrainings = computed(() => this.filteredTrainings().length);
   selectedTrainingId = signal<string | null>(null);
   selectedTrainingDetails = signal<any | null>(null);
   uploadProgress = signal<number | null>(null);
@@ -386,6 +398,13 @@ export class AdminDashboardComponent {
         this.loadTrainings();
       }
     });
+    
+    // Reset training pagination when filters change
+    effect(() => {
+      this.trainingSearch();
+      this.trainingStatusFilter();
+      this.trainingCurrentPage.set(1);
+    });
   }
 
   // Wrappers para funções de PDF do serviço (mantém template simples)
@@ -621,7 +640,20 @@ export class AdminDashboardComponent {
     });
   }
 
-  clearTrainingFilters() { this.trainingSearch.set(''); this.trainingStatusFilter.set('all'); }
+  clearTrainingFilters() { 
+    this.trainingSearch.set(''); 
+    this.trainingStatusFilter.set('all');
+    this.trainingCurrentPage.set(1);
+  }
+  
+  onTrainingPageChange(page: number): void {
+    this.trainingCurrentPage.set(page);
+  }
+  
+  onTrainingPageSizeChange(size: number): void {
+    this.trainingPageSize.set(size);
+    this.trainingCurrentPage.set(1);
+  }
 
   openCreateTraining() {
     this.createTrainingForm.set({ title:'', description:'', author:'', entityType:'EBOOK', organizationId: null });

@@ -7,88 +7,68 @@
 
 <div class="catalog-page">
   <div class="container">
-    <div class="catalog-filters" role="group" aria-label="Filtros do catálogo">
-      <div class="catalog-filter-bar">
-        <div class="catalog-search">
-          <label class="sr-only" for="catalogSearch">Buscar no catálogo</label>
-          <i class="fas fa-search" aria-hidden="true"></i>
-          <input
-            id="catalogSearch"
-            type="search"
-            [(ngModel)]="searchTerm"
-            placeholder="Buscar por título ou descrição"
-          />
+    <div class="catalog-main-wrapper">
+      <!-- Filters Sidebar -->
+      <pros-filters-sidebar
+        [courseTypeOptions]="courseTypeOptions"
+        [sectors]="uniqueSectorNames()"
+      ></pros-filters-sidebar>
+
+      <!-- Main Content with Grid -->
+      <div class="catalog-content">
+        <div class="catalog-loading" *ngIf="isLoading()">
+          <span class="spinner" aria-hidden="true"></span>
+          <p>Carregando conteúdos…</p>
         </div>
 
-        <div class="catalog-format-toggle" role="group" aria-label="Filtrar por formato" *ngIf="true">
-          <button type="button" [class.active]="selectedFormat === ''" (click)="selectFormat('')">Todos</button>
-          <button type="button" [class.active]="selectedFormat === 'EBOOK'" (click)="selectFormat('EBOOK')">E-books</button>
-          <button
-            type="button"
-            [class.active]="selectedFormat === 'RECORDED_COURSE'"
-            (click)="selectFormat('RECORDED_COURSE')"
-          >
-            Cursos gravados
-          </button>
+        <div class="catalog-error" *ngIf="hasError()">
+          <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+          <p>Não foi possível carregar o catálogo agora. Tente novamente mais tarde.</p>
+        </div>
+
+        <div class="catalog-grid" *ngIf="!isLoading() && !hasError() && paginatedItems().length > 0">
+          <article class="catalog-card" *ngFor="let item of paginatedItems(); trackBy: trackById">
+            <span
+              class="catalog-card-badge"
+              [ngClass]="(item.entityType || item.format).toLowerCase()"
+            >
+              {{ (item.entityType || item.format) | formatLabel }}
+            </span>
+            <div class="catalog-card-cover" [ngClass]="{ 'no-cover': !item.coverImageUrl }">
+              <img
+                *ngIf="item.coverImageUrl"
+                [src]="item.coverImageUrl"
+                alt="{{ item.title || 'Capa do conteúdo' }}"
+                title="{{ item.title || 'Capa do conteúdo' }}"
+                loading="lazy"
+              />
+            </div>
+            <h2 class="catalog-card-title">{{ item.title }}</h2>
+            <p class="catalog-card-author" *ngIf="item.author">{{ item.author }}</p>
+            <div class="catalog-card-meta" *ngIf="item.sectors.length">
+              <span class="catalog-card-sector" *ngFor="let sectorId of item.sectors">{{ sectorName(sectorId) | uppercase }}</span>
+            </div>
+            <div class="catalog-card-actions">
+              <button class="btn" type="button" (click)="showDetails(item)">Detalhes</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="catalog-state" *ngIf="!isLoading() && !hasError() && paginatedItems().length === 0 && filteredItems().length === 0">
+          <i class="fas fa-folder-open" aria-hidden="true"></i>
+          <p>Nenhum conteúdo encontrado com os filtros atuais.</p>
         </div>
       </div>
-
-      <div class="catalog-quick-filters" role="radiogroup" aria-label="Filtrar por setor">
-        <button type="button" [class.active]="selectedSector === ''" (click)="clearSector()">
-          Todos os setores
-        </button>
-        <button
-          type="button"
-          *ngFor="let sector of sectors"
-          [class.active]="selectedSector === sector.id"
-          (click)="selectSector(sector.id)"
-        >
-          {{ sector.name }}
-        </button>
-      </div>
     </div>
 
-    <div class="catalog-loading" *ngIf="isLoading">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Carregando conteúdos…</p>
-    </div>
-
-    <div class="catalog-error" *ngIf="hasError">
-      <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
-      <p>Não foi possível carregar o catálogo agora. Tente novamente mais tarde.</p>
-    </div>
-
-    <div class="catalog-grid" *ngIf="!isLoading && !hasError && filteredItems.length">
-      <article class="catalog-card" *ngFor="let item of filteredItems; trackBy: trackById">
-        <span
-          class="catalog-card-badge"
-          [ngClass]="(item.entityType || item.format).toLowerCase()"
-        >
-          {{ (item.entityType || item.format) | formatLabel }}
-        </span>
-        <div class="catalog-card-cover" [ngClass]="{ 'no-cover': !item.coverImageUrl }">
-          <img
-            *ngIf="item.coverImageUrl"
-            [src]="item.coverImageUrl"
-            alt="{{ item.title || 'Capa do conteúdo' }}"
-            title="{{ item.title || 'Capa do conteúdo' }}"
-            loading="lazy"
-          />
-        </div>
-        <h2 class="catalog-card-title">{{ item.title }}</h2>
-        <p class="catalog-card-author" *ngIf="item.author">{{ item.author }}</p>
-        <div class="catalog-card-meta" *ngIf="item.sectors.length">
-          <span class="catalog-card-sector" *ngFor="let sectorId of item.sectors">{{ sectorName(sectorId) | uppercase }}</span>
-        </div>
-        <div class="catalog-card-actions">
-          <button class="btn" type="button" (click)="showDetails(item)">Detalhes</button>
-        </div>
-      </article>
-    </div>
-
-    <div class="catalog-state" *ngIf="!isLoading && !hasError && !filteredItems.length">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>Nenhum conteúdo encontrado com os filtros atuais.</p>
-    </div>
+    <!-- Pagination (Outside Grid Scope) -->
+    <pros-pagination
+      *ngIf="!isLoading() && !hasError() && filteredItems().length > 0"
+      [currentPage]="filterService.currentPage()"
+      [pageSize]="filterService.pageSize()"
+      [totalItems]="totalItems()"
+      (pageChanged)="onPageChange($event)"
+      (pageSizeChanged)="onPageSizeChange($event)"
+    ></pros-pagination>
   </div>
 </div>

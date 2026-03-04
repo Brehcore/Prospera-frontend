@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take, takeUntil, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap, finalize } from 'rxjs/operators';
@@ -9,9 +9,12 @@ import { of, Subscription, Subject } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { SubscriptionService, UserSubscription } from '../../core/services/subscription.service';
 import { AdminService } from '../../core/services/admin.service';
+import { FilterService } from '../../core/services/filter.service';
 import { UserProfile } from '../../core/models/user';
 import { AdminTrainingCardComponent } from './admin-training-card.component';
 import { TrainingsComponent } from '../trainings/trainings.component';
+import { FiltersSidebarComponent } from '../../shared/components/filters-sidebar.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 
 interface AccountMenuItem {
   id: 'profile' | 'plans' | 'manageCompanies' | 'learning';
@@ -37,7 +40,7 @@ interface CompanySubuser {
 @Component({
   selector: 'pros-account',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, AdminTrainingCardComponent, TrainingsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, AdminTrainingCardComponent, TrainingsComponent, FiltersSidebarComponent, PaginationComponent],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss']
 })
@@ -103,8 +106,10 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   // Admin trainings (visible to system admins in the learning section)
   adminTrainingsLoading = false;
-  adminTrainings: Array<any> = [];
+  adminTrainings = signal<Array<any>>([]);
   adminTrainingsError = '';
+  adminCurrentPage = signal(1);
+  adminPageSize = signal(10);
 
   successMessage = '';
   errorMessage = '';
@@ -188,8 +193,84 @@ export class AccountComponent implements OnInit, OnDestroy {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly adminService = inject(AdminService);
   private readonly http = inject(HttpClient);
+  private readonly filterService = inject(FilterService);
 
-  constructor(private readonly authService: AuthService) {}
+  // Computed signals for admin trainings filtering and pagination
+  adminCourseTypeOptions = computed(() => {
+    const types = new Set<string>();
+    this.adminTrainings().forEach(training => {
+      if (training.type) {
+        types.add(training.type);
+      }
+      if (training.entityType) {
+        types.add(training.entityType);
+      }
+    });
+    const typeArray = Array.from(types);
+    return [
+      { label: 'Cursos gravados', value: 'RECORDED_COURSE' },
+      { label: 'E-Books', value: 'EBOOK' }
+    ].filter(opt => typeArray.includes(opt.value));
+  });
+
+  adminUniqueSectors = computed(() => {
+    const sectors = new Set<string>();
+    this.adminTrainings().forEach(training => {
+      if (training.sector) {
+        sectors.add(training.sector);
+      }
+    });
+    return Array.from(sectors).sort();
+  });
+
+  filteredAdminTrainings = computed(() => {
+    const trainings = this.adminTrainings();
+    const searchTerm = this.filterService.searchTerm().toLowerCase();
+    const selectedTypes = this.filterService.courseTypes();
+    const selectedSectors = this.filterService.sectors();
+
+    return trainings.filter(training => {
+      const matchesSearch = !searchTerm ||
+        (training.title?.toLowerCase().includes(searchTerm)) ||
+        (training.name?.toLowerCase().includes(searchTerm)) ||
+        (training.author?.toLowerCase().includes(searchTerm)) ||
+        (training.creator?.toLowerCase().includes(searchTerm));
+
+      const matchesType = selectedTypes.length === 0 || selectedTypes.includes(training.type) || selectedTypes.includes(training.entityType);
+      const matchesSector = selectedSectors.length === 0 || (training.sector && selectedSectors.includes(training.sector));
+
+      return matchesSearch && matchesType && matchesSector;
+    });
+  });
+
+  paginatedAdminTrainings = computed(() => {
+    const filtered = this.filteredAdminTrainings();
+    const pageSize = this.adminPageSize();
+    const currentPage = this.adminCurrentPage();
+    const startIndex = (currentPage - 1) * pageSize;
+
+    return filtered.slice(startIndex, startIndex + pageSize);
+  });
+
+  totalAdminTrainings = computed(() => this.filteredAdminTrainings().length);
+
+  constructor(private readonly authService: AuthService) {
+    // Reset admin page when filters change
+    effect(() => {
+      this.filterService.searchTerm();
+      this.filterService.courseTypes();
+      this.filterService.sectors();
+      this.adminCurrentPage.set(1);
+    });
+
+    // Reset filters when admin trainings are loaded to avoid conflicts with catalog filters
+    effect(() => {
+      const trainings = this.adminTrainings();
+      if (trainings.length > 0) {
+        this.clearAdminFilters();
+      }
+    });
+  }
 
   ngOnInit(): void {
     // Verificar query params para seleção de seção e reagir a mudanças
@@ -1547,17 +1628,17 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (this.adminTrainingsLoading && !force) return;
     this.adminTrainingsLoading = true;
     this.adminTrainingsError = '';
-    this.adminTrainings = [];
+    this.adminTrainings.set([]);
     this.adminService.getTrainings().subscribe({
       next: list => {
         this.adminTrainingsLoading = false;
+        let trainings: Array<any> = [];
         if (Array.isArray(list)) {
-          this.adminTrainings = list;
+          trainings = list;
         } else if (list && typeof list === 'object') {
-          this.adminTrainings = Array.isArray((list as any).items) ? (list as any).items : [];
-        } else {
-          this.adminTrainings = [];
+          trainings = Array.isArray((list as any).items) ? (list as any).items : [];
         }
+        this.adminTrainings.set(trainings);
       },
       error: err => {
         console.warn('[Account] failed to load admin trainings', err);
@@ -1565,6 +1646,20 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.adminTrainingsError = 'Não foi possível carregar os conteúdos administrativos agora.';
       }
     });
+  }
+
+  onAdminPageChange(page: number): void {
+    this.adminCurrentPage.set(page);
+  }
+
+  onAdminPageSizeChange(size: number): void {
+    this.adminPageSize.set(size);
+    this.adminCurrentPage.set(1);
+  }
+
+  clearAdminFilters(): void {
+    this.filterService.reset();
+    this.adminCurrentPage.set(1);
   }
 
   openAdminTraining(training: any): void {

@@ -1,39 +1,95 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, inject, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogModalService } from '../../core/services/catalog-modal.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { CatalogItem, CatalogService, CatalogSector } from '../../core/services/catalog.service';
 import { FormatLabelPipe } from '../../shared/pipes/format-label.pipe';
+import { FilterService } from '../../core/services/filter.service';
+import { FiltersSidebarComponent } from '../../shared/components/filters-sidebar.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 
 @Component({
   selector: 'pros-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, FormatLabelPipe],
+  imports: [CommonModule, FormsModule, FormatLabelPipe, FiltersSidebarComponent, PaginationComponent],
   templateUrl: './catalog.component.html',
   styleUrls: ['./catalog.component.scss']
 })
 export class CatalogComponent implements OnInit {
-  items: CatalogItem[] = [];
-  sectors: CatalogSector[] = [];
+  private readonly catalogService = inject(CatalogService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly catalogModal = inject(CatalogModalService);
+  public readonly filterService = inject(FilterService);
 
-  isLoading = true;
-  hasError = false;
+  readonly items = signal<CatalogItem[]>([]);
+  readonly sectors = signal<CatalogSector[]>([]);
+  readonly uniqueSectorNames = computed(() => {
+    const allSectors = new Set<string>();
+    this.items().forEach(item => {
+      (item.sectors || []).forEach(sector => {
+        const sectorName = this.sectorName(sector);
+        if (sectorName) {
+          allSectors.add(sectorName);
+        }
+      });
+    });
+    return Array.from(allSectors).sort();
+  });
 
-  searchTerm = '';
-  selectedFormat = '';
-  selectedSector = '';
-  // selectedItem handled by global modal service now
+  readonly isLoading = signal(true);
+  readonly hasError = signal(false);
 
   private pendingDetailId: string | null = null;
 
-  constructor(
-    private readonly catalogService: CatalogService,
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly catalogModal: CatalogModalService
-  ) {}
+  // Computed filtered items
+  readonly filteredItems = computed(() => {
+    const filterState = this.filterService.getFilterState();
+    let result = [...this.items()];
+
+    // Apply search filter
+    if (filterState.searchTerm) {
+      const term = filterState.searchTerm.toLowerCase();
+      result = result.filter(item =>
+        `${item.title} ${item.description}`.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply format filter (course types)
+    if (filterState.courseTypes.length > 0) {
+      result = result.filter(item => filterState.courseTypes.includes(item.format));
+    }
+
+    // Apply sector filter
+    if (filterState.sectors.length > 0) {
+      result = result.filter(item => {
+        const itemSectors = (item.sectors || []).map(s => this.sectorName(s));
+        return filterState.sectors.some(s => itemSectors.includes(s));
+      });
+    }
+
+    return result;
+  });
+
+  // Computed paginated items
+  readonly paginatedItems = computed(() => {
+    const filterState = this.filterService.getFilterState();
+    const filtered = this.filteredItems();
+    const start = (filterState.currentPage - 1) * filterState.pageSize;
+    const end = start + filterState.pageSize;
+    return filtered.slice(start, end);
+  });
+
+  readonly totalItems = computed(() => this.filteredItems().length);
+
+  readonly courseTypeOptions = [
+    { label: 'Cursos gravados', value: 'RECORDED_COURSE' },
+    { label: 'E-Books', value: 'EBOOK' }
+  ];
+
+  constructor() {}
 
   ngOnInit(): void {
     this.loadData();
@@ -43,8 +99,8 @@ export class CatalogComponent implements OnInit {
       const id = params['id'] || params['itemId'] || params['trainingId'];
       if (id) {
         const sid = String(id);
-        if (this.items && this.items.length) {
-          const found = this.items.find(i => i.id === sid);
+        if (this.items().length) {
+          const found = this.items().find(i => i.id === sid);
           if (found) {
             this.showDetails(found);
             // remove `id` from query params
@@ -59,8 +115,8 @@ export class CatalogComponent implements OnInit {
             // if not present, mark pending and try to reload
             this.pendingDetailId = sid;
             this.catalogService.loadCatalog().subscribe(items => {
-              this.items = items;
-              const f = this.items.find(i => i.id === sid);
+              this.items.set(items);
+              const f = this.items().find(i => i.id === sid);
               if (f) {
                 this.showDetails(f);
                 try {
@@ -80,52 +136,19 @@ export class CatalogComponent implements OnInit {
     });
   }
 
-  get filteredItems(): CatalogItem[] {
-    return this.items.filter(item => {
-      if (this.selectedFormat && item.format !== this.selectedFormat) {
-        return false;
-      }
-      if (this.selectedSector) {
-        const normalizedSectors = (item.sectors || []).map(sector => sector.toString().toLowerCase());
-        const match = normalizedSectors.includes(this.selectedSector.toLowerCase()) ||
-          (this.selectedSector === 'global' && !normalizedSectors.length);
-        if (!match) {
-          return false;
-        }
-      }
-      if (this.searchTerm) {
-        const haystack = `${item.title} ${item.description}`.toLowerCase();
-        if (!haystack.includes(this.searchTerm.toLowerCase())) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }
-
-  selectFormat(format: string): void {
-    this.selectedFormat = format;
-  }
-
-  selectSector(sector: string): void {
-    this.selectedSector = sector;
-  }
-
-  clearSector(): void {
-    this.selectedSector = '';
-  }
+  // legacy controls removed: filtering now handled by FilterService and the sidebar component
 
   private loadData(): void {
-    this.isLoading = true;
-    this.hasError = false;
+    this.isLoading.set(true);
+    this.hasError.set(false);
 
     this.catalogService.loadCatalog().subscribe({
       next: items => {
-        this.items = items;
-        this.isLoading = false;
+        this.items.set(items);
+        this.isLoading.set(false);
         // if there was a pending detail request from query params, try to open it
         if (this.pendingDetailId) {
-          const found = this.items.find(i => i.id === this.pendingDetailId);
+          const found = this.items().find(i => i.id === this.pendingDetailId);
           if (found) {
             this.showDetails(found);
             // remove `id` from query params to avoid reopening on refresh
@@ -142,18 +165,18 @@ export class CatalogComponent implements OnInit {
       },
       error: error => {
         console.error('[Catalog] Falha ao carregar itens', error);
-        this.hasError = true;
-        this.isLoading = false;
+        this.hasError.set(true);
+        this.isLoading.set(false);
       }
     });
 
     this.catalogService.loadSectors().subscribe({
       next: sectors => {
         const unique = this.ensureGlobalSector(sectors || []);
-        this.sectors = unique;
+        this.sectors.set(unique);
       },
       error: () => {
-        this.sectors = this.ensureGlobalSector([]);
+        this.sectors.set(this.ensureGlobalSector([]));
       }
     });
   }
@@ -176,7 +199,7 @@ export class CatalogComponent implements OnInit {
 
   sectorName(id: string): string {
     if (!id) return id;
-    const found = this.sectors.find(s => s.id === id);
+    const found = this.sectors().find(s => s.id === id);
     const candidate = found?.name ?? id;
     // Hide raw GUID-like ids to avoid showing noise in the UI
     const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -186,9 +209,20 @@ export class CatalogComponent implements OnInit {
     return candidate;
   }
 
+  onPageChange(page: number): void {
+    this.filterService.setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  onPageSizeChange(size: number): void {
+    this.filterService.setPageSize(size);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   @HostListener('document:keydown.escape')
   onEscape() {
     // Close global catalog modal if open
     try { this.catalogModal.close(); } catch (e) { /* no-op */ }
   }
 }
+

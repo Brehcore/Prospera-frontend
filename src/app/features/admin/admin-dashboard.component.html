@@ -275,7 +275,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let t of filteredTrainings()">
+          <tr *ngFor="let t of paginatedTrainings()">
             <td data-label="ID">{{t.id}}</td>
             <td data-label="Título">{{t.title}}</td>
             <td data-label="Tipo">{{t.entityType || '—'}}</td>
@@ -339,12 +339,21 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="!filteredTrainings().length"><td colspan="7" class="empty">Nenhum conteúdo encontrado.</td></tr>
+          <tr *ngIf="!paginatedTrainings().length"><td colspan="7" class="empty">Nenhum conteúdo encontrado.</td></tr>
           </tbody>
         </table>
         <div class="progress-bar" *ngIf="uploadProgress() !== null">
           <div class="bar" [style.width.%]="uploadProgress() || 0"></div>
         </div>
+        <!-- Pagination for Trainings -->
+        <pros-pagination
+          *ngIf="!loading()['trainings'] && totalTrainings() > 0"
+          [currentPage]="trainingCurrentPage()"
+          [pageSize]="trainingPageSize()"
+          [totalItems]="totalTrainings()"
+          (pageChanged)="onTrainingPageChange($event)"
+          (pageSizeChanged)="onTrainingPageSizeChange($event)"
+        ></pros-pagination>
         <div class="training-details" *ngIf="selectedTrainingId()">
           <div class="training-details-header">
             <strong>Detalhes do Conteúdo</strong>

@@ -1818,6 +1818,18 @@
   color: var(--gray-darker, #1f2a37);
 }
 
+.trainings-main-wrapper {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.trainings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .trainings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

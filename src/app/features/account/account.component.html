@@ -603,19 +603,42 @@
                   <p>{{ adminTrainingsError }}</p>
                 </div>
 
-                <div *ngIf="!adminTrainingsLoading && adminTrainings.length" class="trainings-grid">
-                  <pros-admin-training-card
-                    *ngFor="let t of adminTrainings"
-                    [training]="t"
-                    [onDetailsClick]="openAdminTraining.bind(this)"
-                    [onAccessClick]="openStudentView.bind(this)"
-                  ></pros-admin-training-card>
+                <div *ngIf="!adminTrainingsLoading && adminTrainings().length > 0" class="trainings-main-wrapper">
+                  <pros-filters-sidebar 
+                    [courseTypeOptions]="adminCourseTypeOptions()"
+                    [sectors]="adminUniqueSectors()"
+                  ></pros-filters-sidebar>
+                  
+                  <div class="trainings-content">
+                    <div *ngIf="paginatedAdminTrainings().length > 0" class="trainings-grid">
+                      <pros-admin-training-card
+                        *ngFor="let t of paginatedAdminTrainings()"
+                        [training]="t"
+                        [onDetailsClick]="openAdminTraining.bind(this)"
+                        [onAccessClick]="openStudentView.bind(this)"
+                      ></pros-admin-training-card>
+                    </div>
+                    
+                    <div *ngIf="paginatedAdminTrainings().length === 0" class="empty">
+                      <i class="fas fa-inbox" aria-hidden="true"></i>
+                      <p>Nenhum conteúdo encontrado com os filtros selecionados.</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div *ngIf="!adminTrainingsLoading && !adminTrainings.length" class="empty">
+                <div *ngIf="!adminTrainingsLoading && adminTrainings().length === 0" class="empty">
                   <i class="fas fa-inbox" aria-hidden="true"></i>
                   <p>Nenhum conteúdo administrativo encontrado.</p>
                 </div>
+
+                <pros-pagination
+                  *ngIf="!adminTrainingsLoading && totalAdminTrainings() > 0"
+                  [currentPage]="adminCurrentPage()"
+                  [pageSize]="adminPageSize()"
+                  [totalItems]="totalAdminTrainings()"
+                  (pageChanged)="onAdminPageChange($event)"
+                  (pageSizeChanged)="onAdminPageSizeChange($event)"
+                ></pros-pagination>
               </div>
             </div>
             <ng-template #normalLearning>
