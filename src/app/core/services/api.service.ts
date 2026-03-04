@@ -64,7 +64,7 @@ export class ApiService {
     }
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080';
+      return 'http://localhost:8080/api';
     }
     return 'https://prospera.gotreeconsultoria.com.br/api';
   }
