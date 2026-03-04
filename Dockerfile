@@ -19,13 +19,7 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copia o resultado do build
 COPY --from=build /app/dist /tmp/dist
-RUN if [ -d "/tmp/dist/browser" ]; then \
-      cp -r /tmp/dist/browser/* /usr/share/nginx/html/; \
-    elif [ -d "/tmp/dist/frontend" ]; then \
-      cp -r /tmp/dist/frontend/browser/* /usr/share/nginx/html/ 2>/dev/null || cp -r /tmp/dist/frontend/* /usr/share/nginx/html/; \
-    else \
-      cp -r /tmp/dist/*/* /usr/share/nginx/html/ 2>/dev/null || cp -r /tmp/dist/* /usr/share/nginx/html/; \
-    fi
+RUN cp -r /tmp/dist/Prospera-frontend/browser/* /usr/share/nginx/html/ 2>/dev/null || cp -r /tmp/dist/Prospera-frontend/* /usr/share/nginx/html/
 
 # Copia a configuração do Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
