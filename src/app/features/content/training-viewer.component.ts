@@ -3002,7 +3002,7 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
   }
 
   private loadRecordedCourseVideo(lessonId: string): void {
-    this.api.get<any>(`/api/lessons/${encodeURIComponent(lessonId)}`).subscribe({
+    this.api.get<any>(`/lessons/${encodeURIComponent(lessonId)}`).subscribe({
       next: lesson => {
         if (lesson?.videoUrl) {
           let videoUrl = lesson.videoUrl;
@@ -3209,7 +3209,7 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
     const lesson = this.currentLesson();
     if (!lesson || !lesson.id) return;
 
-    const url = this.api.createUrl(`/api/lessons/${encodeURIComponent(lesson.id)}/next`);
+    const url = this.api.createUrl(`/lessons/${encodeURIComponent(lesson.id)}/next`);
     this.http.get<any>(url, { observe: 'response' }).subscribe({
       next: response => {
         if (response.status === 204 || !response.body) {
@@ -3477,7 +3477,7 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
 
       // Call API to issue certificate using enrollmentId
       // Backend retorna um código de validação (string simples, não JSON)
-      this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
+      this.api.post<string>(`/certificates/issue/${encodeURIComponent(enrollmentId)}`, {}, { responseType: 'text' as any }).subscribe({
         next: (validationCode) => {
           this.issuingCertificate.set(false);
           this.showSaveMessage('Certificado gerado com sucesso! Uma cópia em PDF também foi enviada para o seu e-mail.');
@@ -3562,7 +3562,7 @@ export class TrainingViewerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const url = this.api.createUrl(`/api/certificates/download/${encodeURIComponent(certId)}`)
+    const url = this.api.createUrl(`/certificates/download/${encodeURIComponent(certId)}`)
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         try {

@@ -48,7 +48,7 @@ export class CertificatesComponent {
     if (this.searchTerm() && this.searchTerm().trim().length) {
       params.search = this.searchTerm().trim();
     }
-    this.apiService.get<CertificateItem[]>('/api/certificates/my-certificates', { params }).subscribe({
+    this.apiService.get<CertificateItem[]>('/certificates/my-certificates', { params }).subscribe({
       next: data => {
         this.items.set(data || []);
         this.isLoading.set(false);
@@ -82,7 +82,7 @@ export class CertificatesComponent {
       }
 
       // Backend retorna um código de validação (string simples, não JSON)
-      this.apiService.post<string>(`/api/certificates/issue/${item.enrollmentId}`, {}, { responseType: 'text' as any }).subscribe({
+      this.apiService.post<string>(`/certificates/issue/${item.enrollmentId}`, {}, { responseType: 'text' as any }).subscribe({
         next: (validationCode) => this.load(),
         error: err => console.error('[Certificates] issue failed', err)
       });
@@ -96,7 +96,7 @@ export class CertificatesComponent {
       return;
     }
 
-    const url = this.apiService.createUrl(`/api/certificates/download/${encodeURIComponent(certId)}`);
+    const url = this.apiService.createUrl(`/certificates/download/${encodeURIComponent(certId)}`);
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         try {

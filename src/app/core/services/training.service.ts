@@ -63,7 +63,7 @@ export class TrainingService {
   // Matrícula Self-Service
   enrollInTraining(trainingId: string): Observable<EnrollmentResponseDTO> {
     if (!trainingId) throw new Error('trainingId is required for enrollment');
-    return this.api.post<EnrollmentResponseDTO>(`/api/enrollments/${encodeURIComponent(trainingId)}`, {});
+    return this.api.post<EnrollmentResponseDTO>(`/enrollments/${encodeURIComponent(trainingId)}`, {});
   }
 
   // Listar Matrículas do Usuário
@@ -86,20 +86,20 @@ export class TrainingService {
 
   // PLAYER DE AULAS
   getLesson(lessonId: string): Observable<LessonDTO> {
-    return this.api.get<LessonDTO>(`/api/lessons/${lessonId}`);
+    return this.api.get<LessonDTO>(`/lessons/${lessonId}`);
   }
 
   getNextLesson(lessonId: string): Observable<LessonDTO | null> {
-    return this.api.get<LessonDTO | null>(`/api/lessons/${lessonId}/next`);
+    return this.api.get<LessonDTO | null>(`/lessons/${lessonId}/next`);
   }
 
   getPreviousLesson(lessonId: string): Observable<LessonDTO | null> {
-    return this.api.get<LessonDTO | null>(`/api/lessons/${lessonId}/previous`);
+    return this.api.get<LessonDTO | null>(`/lessons/${lessonId}/previous`);
   }
 
   // Método unificado e correto para concluir aula
   completeLesson(lessonId: string): Observable<void> {
-    return this.api.post<void>(`/api/lessons/${lessonId}/complete`, {});
+    return this.api.post<void>(`/lessons/${lessonId}/complete`, {});
   }
 
   // Compatibilidade retroativa: alguns componentes ainda chamam este método

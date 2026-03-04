@@ -92,7 +92,7 @@ export class SupportComponent {
     const payload = this.supportForm.getRawValue();
 
     // Usar fetch() para evitar o HttpInterceptor que adicionaria JWT (rota pública)
-    fetch('http://localhost:8080/api/support/tickets', {
+    fetch('http://localhost:8080/support/tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

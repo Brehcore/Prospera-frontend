@@ -313,7 +313,7 @@ export class AccountComponent implements OnInit, OnDestroy {
               return of(null);
             }
             this.lookupInProgress = true;
-            const url = `http://localhost:8080/api/lookup/cnpj/${digits}`;
+            const url = `http://localhost:8080/lookup/cnpj/${digits}`;
             return this.http.get(url).pipe(
               catchError(err => {
                 console.warn('[Account] lookup cnpj falhou', err);
@@ -366,7 +366,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (this.lookupInProgress) return;
     this.lookupInProgress = true;
     this.lookupError = '';
-    const url = `http://localhost:8080/api/lookup/cnpj/${digits}`;
+    const url = `http://localhost:8080/lookup/cnpj/${digits}`;
     this.http.get(url).pipe(take(1)).subscribe({
       next: (res: any) => {
         this.lookupInProgress = false;

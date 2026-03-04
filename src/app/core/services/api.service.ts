@@ -1,6 +1,7 @@
 import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface RequestOptions {
   headers?: HttpHeaders | { [header: string]: string | string[] };
@@ -12,7 +13,7 @@ export interface RequestOptions {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = this.resolveBaseUrl();
+  private readonly baseUrl = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -57,15 +58,4 @@ export class ApiService {
     }
     return `${this.baseUrl}/${path}`;
   }
-
-  private resolveBaseUrl(): string {
-    if (typeof window === 'undefined') {
-      return 'https://prospera.gotreeconsultoria.com.br/api';
-    }
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080/api';
-    }
-    return 'https://prospera.gotreeconsultoria.com.br/api';
-  }
 }

@@ -408,7 +408,7 @@ export class SubscriptionViewComponent implements OnInit {
       this.updateCertificateError(id, null);
 
       // Backend retorna um código de validação (string simples, não JSON)
-      this.api.post<string>(`/api/certificates/issue/${encodeURIComponent(id)}`, {}, { responseType: 'text' as any }).subscribe({
+      this.api.post<string>(`/certificates/issue/${encodeURIComponent(id)}`, {}, { responseType: 'text' as any }).subscribe({
         next: (validationCode) => {
           this.issuingCertificateId.set(null);
           // Atualiza matrícula reconsultando enrollments para obter certificateId atualizado
@@ -443,7 +443,7 @@ export class SubscriptionViewComponent implements OnInit {
     }
 
     // Construa a URL para download do certificado
-    const url = this.api.createUrl(`/api/certificates/download/${encodeURIComponent(enrollment.certificateId)}`)
+    const url = this.api.createUrl(`/certificates/download/${encodeURIComponent(enrollment.certificateId)}`)
     window.location.href = url;
   }
 

@@ -8,7 +8,7 @@ export class LessonService {
 
   /**
    * Marca uma lição como concluída no backend
-   * POST /api/lessons/{lessonId}/complete
+   * POST /lessons/{lessonId}/complete
    * 
    * Isso cria um registro em LessonProgress e atualiza o progresso do curso
    * 
@@ -17,7 +17,7 @@ export class LessonService {
    */
   markLessonAsCompleted(lessonId: string): Observable<any> {
     console.log('[LessonService] Marcando lição como concluída:', { lessonId });
-    const url = `/api/lessons/${encodeURIComponent(lessonId)}/complete`;
+    const url = `/lessons/${encodeURIComponent(lessonId)}/complete`;
     
     // POST com body vazio - o userId vem do token no interceptor
     return this.api.post<any>(url, {});
