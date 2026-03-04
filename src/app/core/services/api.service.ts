@@ -59,13 +59,13 @@ export class ApiService {
   }
 
   private resolveBaseUrl(): string {
-    if (typeof window === 'undefined') {
-      return 'https://j6h5i7c1kjn6.manus.space';
-    }
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080';
-    }
-    return 'https://j6h5i7c1kjn6.manus.space';
-  }
+    if (typeof window === 'undefined') {
+      return 'https://prospera.gotreeconsultoria.com.br/api';
+    }
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8080';
+    }
+    return 'https://prospera.gotreeconsultoria.com.br/api';
+  }
 }
