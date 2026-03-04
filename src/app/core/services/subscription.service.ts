@@ -57,8 +57,8 @@ export class SubscriptionService {
    * um AccessStatus com accessType='NONE' para simplificar o consumo.
    */
   getMyAccessStatus() {
-    // Novo endpoint unificado conforme especificado: /api/me/access-status
-    return this.api.get<any>('/api/me/access-status').pipe(
+    // Novo endpoint unificado conforme especificado: /me/access-status
+    return this.api.get<any>('/me/access-status').pipe(
       map(res => {
         if (!res || (typeof res === 'object' && Object.keys(res).length === 0)) {
           return { accessType: 'NONE', planName: null, endDate: null, organizationName: null } as AccessStatus;
