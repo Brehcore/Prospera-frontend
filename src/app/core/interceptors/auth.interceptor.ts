@@ -4,10 +4,16 @@ import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { isTokenExpired } from '../utils/jwt.util';
+import { SKIP_AUTH } from '../http.tokens';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.getToken();
+
+  // Se a requisição declarar SKIP_AUTH, não adiciona header Authorization
+  if (req.context.get(SKIP_AUTH)) {
+    return next(req);
+  }
 
   if (token && !req.headers.has('Authorization')) {
     const authReq = req.clone({

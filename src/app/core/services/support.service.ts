@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { catchError, map, of, throwError } from 'rxjs';
+import { HttpContext } from '@angular/common/http';
 
 import { ApiService } from './api.service';
+import { SKIP_AUTH } from '../http.tokens';
 
 export interface ContactMessage {
   name: string;
@@ -27,7 +29,9 @@ export class SupportService {
   constructor(private readonly api: ApiService) {}
 
   sendContactMessage(payload: ContactMessage) {
-    return this.api.post<SupportResponse>('/support/contact', payload).pipe(
+    const url = this.api.createPublicUrl('/support/contact');
+    const context = new HttpContext().set(SKIP_AUTH, true);
+    return this.api.post<SupportResponse>(url, payload, { context }).pipe(
       map(response => ({ success: response?.success ?? true, message: response?.message ?? 'Mensagem enviada.' })),
       catchError(error => {
         const fallbackMessage = error?.error?.message ?? 'Não foi possível enviar sua mensagem agora.';
@@ -37,7 +41,9 @@ export class SupportService {
   }
 
   openSupportTicket(payload: SupportTicket) {
-    return this.api.post<SupportResponse>('/support/tickets', payload).pipe(
+    const url = this.api.createPublicUrl('/support/tickets');
+    const context = new HttpContext().set(SKIP_AUTH, true);
+    return this.api.post<SupportResponse>(url, payload, { context }).pipe(
       map(response => ({ success: response?.success ?? true, message: response?.message ?? 'Chamado registrado.' })),
       catchError(error => {
         const fallbackMessage = error?.error?.message ?? 'Não foi possível registrar o chamado.';

@@ -2,6 +2,7 @@ import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/commo
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_AUTH } from '../http.tokens';
 
 export interface RequestOptions {
   headers?: HttpHeaders | { [header: string]: string | string[] };
@@ -14,6 +15,23 @@ export interface RequestOptions {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = environment.apiUrl;
+
+  /**
+   * Cria uma URL externa baseada em `environment.apiUrl` mas removendo um eventual '/api' final.
+   * Use para endpoints públicos que não passam pelo prefixo '/api' do gateway.
+   */
+  createExternalUrl(path: string): string {
+    const base = String(this.baseUrl || '').replace(/\/api\/?$/,'');
+    if (!path) return base;
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
+  /**
+   * Alias para criar URLs públicas (sem /api). Retorna uma URL absoluta.
+   */
+  createPublicUrl(path: string): string {
+    return this.createExternalUrl(path);
+  }
 
   constructor(private readonly http: HttpClient) {}
 

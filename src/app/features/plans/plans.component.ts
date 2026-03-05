@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 import { CatalogItem, CatalogService } from '../../core/services/catalog.service';
 import { PlanCardComponent, Plan } from './plan-card.component';
@@ -14,7 +16,7 @@ import { PlanCardComponent, Plan } from './plan-card.component';
 })
 export class PlansComponent implements OnInit {
   private readonly catalogService = inject(CatalogService);
-  private plansUpdateSub: any;
+  private readonly destroy$ = new Subject<void>();
 
   plans = signal<Plan[]>([]);
   isLoading = signal(true);
@@ -26,7 +28,12 @@ export class PlansComponent implements OnInit {
   ngOnInit(): void {
     this.loadPlansFromPublicApi();
     // Recarrega planos quando outro lugar do app notificar mudança
-    this.plansUpdateSub = this.catalogService.plansUpdated.subscribe(() => this.loadPlansFromPublicApi());
+    this.catalogService.plansUpdated.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadPlansFromPublicApi());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private getDurationOrder(days?: number | null): number {
@@ -121,7 +128,7 @@ export class PlansComponent implements OnInit {
   }
 
   private loadPlansFromPublicApi() {
-    this.catalogService.loadFromPublicApi('//localhost:8080/public/catalog/plans').subscribe({
+    this.catalogService.loadFromPublicApi('/public/catalog/plans').subscribe({
       next: (items: any[]) => {
         this.plans.set(items.map(item => ({
           id: item.id,

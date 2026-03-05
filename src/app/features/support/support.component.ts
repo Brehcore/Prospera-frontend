@@ -1,4 +1,4 @@
-import { CommonModule, AsyncPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -17,7 +17,7 @@ interface ContactChannel {
 @Component({
   selector: 'pros-support',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AsyncPipe, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './support.component.html',
   styleUrls: ['./support.component.scss']
 })
@@ -90,30 +90,24 @@ export class SupportComponent {
     this.successMessage = '';
     this.errorMessage = '';
 
-    const payload = this.supportForm.getRawValue();
+    const raw = this.supportForm.getRawValue();
+    const payload = {
+      name: raw.name,
+      email: raw.userEmail,
+      topic: raw.subject,
+      description: raw.message
+    };
 
-    // Monta a URL dinamicamente (Localhost ou VPS com Traefik)
-    const url = `${environment.apiUrl}/support/tickets`;
-
-    // Usar fetch() para evitar o HttpInterceptor que adicionaria JWT (rota pública)
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(async res => {
+    this.supportService.openSupportTicket(payload).subscribe({
+      next: () => {
         this.isSubmitting = false;
-        if (res.ok) {
-          this.supportForm.reset({ subject: this.supportSubjects[0].value });
-          this.showSnackbar('Sua solicitação foi enviada com sucesso. Nossa equipe entrará em contato em breve.');
-        } else {
-          const err = await res.json().catch(() => null);
-          this.errorMessage = (err && err.message) || `Erro: ${res.status} ${res.statusText}`;
-        }
-      })
-      .catch(err => {
+        this.supportForm.reset({ subject: this.supportSubjects[0].value });
+        this.showSnackbar('Sua solicitação foi enviada com sucesso. Nossa equipe entrará em contato em breve.');
+      },
+      error: (err: Error) => {
         this.isSubmitting = false;
         this.errorMessage = err?.message ?? 'Não foi possível registrar o chamado.';
-      });
+      }
+    });
     }
 }

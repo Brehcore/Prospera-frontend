@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, defaultIfEmpty, filter, forkJoin, from, map, of, switchMap, take, tap, Subject } from 'rxjs';
+import { SKIP_AUTH } from '../http.tokens';
 
 import { ApiService } from './api.service';
 
@@ -152,7 +153,11 @@ export class CatalogService {
    * Carrega dados de um endpoint público.
    */
   loadFromPublicApi(endpoint: string) {
-    return this.http.get<any[]>(endpoint);
+    // Se for URL absoluta, usa diretamente; senão, monta a URL pública (sem /api) e faz a requisição
+    const url = /^https?:\/\//i.test(endpoint) ? endpoint : this.api.createPublicUrl(endpoint);
+    // Requisições para o catálogo público não devem incluir Authorization (rota pública)
+    const context = new HttpContext().set(SKIP_AUTH, true);
+    return this.api.get<any[]>(url, { context });
   }
 
   /**

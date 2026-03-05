@@ -3,8 +3,11 @@ import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '
 import { FormBuilder, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take, takeUntil, debounceTime, distinctUntilChanged, filter, switchMap, catchError, tap, finalize } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { of, Subscription, Subject } from 'rxjs';
+
+import { ApiService } from '../../core/services/api.service';
+import { SKIP_AUTH } from '../../core/http.tokens';
 
 import { AuthService } from '../../core/services/auth.service';
 import { SubscriptionService, UserSubscription } from '../../core/services/subscription.service';
@@ -194,6 +197,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly adminService = inject(AdminService);
   private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiService);
   private readonly filterService = inject(FilterService);
 
   // Computed signals for admin trainings filtering and pagination
@@ -314,8 +318,9 @@ export class AccountComponent implements OnInit, OnDestroy {
               return of(null);
             }
             this.lookupInProgress = true;
-            const url = `${environment.apiUrl}/lookup/cnpj/${digits}`;
-            return this.http.get(url).pipe(
+            const url = this.api.createExternalUrl(`/lookup/cnpj/${digits}`);
+            const context = new HttpContext().set(SKIP_AUTH, true);
+            return this.api.get<any>(url, { context }).pipe(
               catchError(err => {
                 console.warn('[Account] lookup cnpj falhou', err);
                 this.lookupError = 'Não foi possível buscar a razão social para este CNPJ.';
@@ -367,8 +372,9 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (this.lookupInProgress) return;
     this.lookupInProgress = true;
     this.lookupError = '';
-    const url = `${environment.apiUrl.replace('/api', '')}/lookup/cnpj/${digits}`;
-    this.http.get(url).pipe(take(1)).subscribe({
+    const url = this.api.createExternalUrl(`/lookup/cnpj/${digits}`);
+    const context = new HttpContext().set(SKIP_AUTH, true);
+    this.api.get<any>(url, { context }).pipe(take(1)).subscribe({
       next: (res: any) => {
         this.lookupInProgress = false;
         if (res && typeof res === 'object') {
