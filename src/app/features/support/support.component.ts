@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { SupportService } from '../../core/services/support.service';
+import { environment } from '../../../environments/environment';
 
 interface ContactChannel {
   icon: string;
@@ -91,8 +92,11 @@ export class SupportComponent {
 
     const payload = this.supportForm.getRawValue();
 
+    // Monta a URL dinamicamente (Localhost ou VPS com Traefik)
+    const url = `${environment.apiUrl}/support/tickets`;
+
     // Usar fetch() para evitar o HttpInterceptor que adicionaria JWT (rota pública)
-    fetch('http://localhost:8080/support/tickets', {
+    fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -111,5 +115,5 @@ export class SupportComponent {
         this.isSubmitting = false;
         this.errorMessage = err?.message ?? 'Não foi possível registrar o chamado.';
       });
-  }
+    }
 }

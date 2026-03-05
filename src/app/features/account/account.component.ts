@@ -314,7 +314,7 @@ export class AccountComponent implements OnInit, OnDestroy {
               return of(null);
             }
             this.lookupInProgress = true;
-            const url = `${environment.apiUrl.replace('/api', '')}/lookup/cnpj/${digits}`;
+            const url = `${environment.apiUrl}/lookup/cnpj/${digits}`;
             return this.http.get(url).pipe(
               catchError(err => {
                 console.warn('[Account] lookup cnpj falhou', err);
