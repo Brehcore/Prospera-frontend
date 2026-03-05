@@ -15,6 +15,7 @@ import { AdminTrainingCardComponent } from './admin-training-card.component';
 import { TrainingsComponent } from '../trainings/trainings.component';
 import { FiltersSidebarComponent } from '../../shared/components/filters-sidebar.component';
 import { PaginationComponent } from '../../shared/components/pagination.component';
+import { environment } from '../../../environments/environment';
 
 interface AccountMenuItem {
   id: 'profile' | 'plans' | 'manageCompanies' | 'learning';
@@ -313,7 +314,7 @@ export class AccountComponent implements OnInit, OnDestroy {
               return of(null);
             }
             this.lookupInProgress = true;
-            const url = `http://localhost:8080/lookup/cnpj/${digits}`;
+            const url = `${environment.apiUrl.replace('/api', '')}/lookup/cnpj/${digits}`;
             return this.http.get(url).pipe(
               catchError(err => {
                 console.warn('[Account] lookup cnpj falhou', err);
@@ -366,7 +367,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (this.lookupInProgress) return;
     this.lookupInProgress = true;
     this.lookupError = '';
-    const url = `http://localhost:8080/lookup/cnpj/${digits}`;
+    const url = `${environment.apiUrl.replace('/api', '')}/lookup/cnpj/${digits}`;
     this.http.get(url).pipe(take(1)).subscribe({
       next: (res: any) => {
         this.lookupInProgress = false;
@@ -834,7 +835,7 @@ export class AccountComponent implements OnInit, OnDestroy {
       return;
     }
     const payload = { email, role };
-    const url = `http://localhost:8080/organizations/${orgId}/members`;
+    const url = `${environment.apiUrl}/organizations/${orgId}/members`;
     console.debug('[Account] inviteSubuser POST', { url, payload });
     this.isAddingMember = true;
     this.http.post(url, payload).subscribe({
