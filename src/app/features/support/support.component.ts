@@ -80,7 +80,7 @@ export class SupportComponent {
     setTimeout(() => (this.snackbarVisible = false), duration);
   }
 
-  submit(): void {
+ submit(): void {
     if (this.supportForm.invalid) {
       this.supportForm.markAllAsTouched();
       return;
@@ -91,11 +91,13 @@ export class SupportComponent {
     this.errorMessage = '';
 
     const raw = this.supportForm.getRawValue();
+    
+    // Nomes exatos conforme o SupportTicketRequest.java
     const payload = {
       name: raw.name,
-      email: raw.userEmail,
-      topic: raw.subject,
-      description: raw.message
+      userEmail: raw.userEmail,
+      subject: raw.subject,
+      message: raw.message
     };
 
     this.supportService.openSupportTicket(payload).subscribe({
@@ -109,5 +111,5 @@ export class SupportComponent {
         this.errorMessage = err?.message ?? 'Não foi possível registrar o chamado.';
       }
     });
-    }
+  }
 }

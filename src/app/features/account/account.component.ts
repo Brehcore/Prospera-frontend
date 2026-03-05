@@ -318,7 +318,7 @@ export class AccountComponent implements OnInit, OnDestroy {
               return of(null);
             }
             this.lookupInProgress = true;
-            const url = this.api.createExternalUrl(`/lookup/cnpj/${digits}`);
+            const url = `${environment.apiUrl}/lookup/cnpj/${digits}`;
             const context = new HttpContext().set(SKIP_AUTH, true);
             return this.api.get<any>(url, { context }).pipe(
               catchError(err => {
@@ -372,7 +372,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (this.lookupInProgress) return;
     this.lookupInProgress = true;
     this.lookupError = '';
-    const url = this.api.createExternalUrl(`/lookup/cnpj/${digits}`);
+    const url = `${environment.apiUrl}/lookup/cnpj/${digits}`;
     const context = new HttpContext().set(SKIP_AUTH, true);
     this.api.get<any>(url, { context }).pipe(take(1)).subscribe({
       next: (res: any) => {

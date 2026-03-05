@@ -682,11 +682,11 @@
         <form [formGroup]="orgCreateForm" (ngSubmit)="createOrganizationFromModal()" novalidate>
           <label>
             <span>CNPJ</span>
-            <input type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" (input)="onCnpjInput()" (blur)="triggerCnpjLookup()" />
+            <input type="text" id="cnpj" name="cnpj" formControlName="cnpj" placeholder="00.000.000/0000-00" (input)="onCnpjInput()" (blur)="triggerCnpjLookup()" />
           </label>
           <label>
             <span>Razão social</span>
-            <input type="text" formControlName="razaoSocial" placeholder="Razão social (preenchimento automático via CNPJ)" />
+            <input type="text" id="razaoSocial" name="razaoSocial" formControlName="razaoSocial" placeholder="Razão social (preenchimento automático via CNPJ)" />
           </label>
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" (click)="closeCreateOrgModal()" [disabled]="isCreatingOrg">Cancelar</button>

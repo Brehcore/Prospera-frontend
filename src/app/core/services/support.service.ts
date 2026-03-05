@@ -14,9 +14,9 @@ export interface ContactMessage {
 
 export interface SupportTicket {
   name: string;
-  email: string;
-  topic: string;
-  description: string;
+  userEmail: string;
+  subject: string;
+  message: string;
 }
 
 interface SupportResponse {
