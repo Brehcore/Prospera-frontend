@@ -319,8 +319,8 @@ export class AccountComponent implements OnInit, OnDestroy {
             }
             this.lookupInProgress = true;
             const url = `${environment.apiUrl}/lookup/cnpj/${digits}`;
-            const context = new HttpContext().set(SKIP_AUTH, true);
-            return this.api.get<any>(url, { context }).pipe(
+            
+            return this.api.get<any>(url).pipe(
               catchError(err => {
                 console.warn('[Account] lookup cnpj falhou', err);
                 this.lookupError = 'Não foi possível buscar a razão social para este CNPJ.';
@@ -343,8 +343,6 @@ export class AccountComponent implements OnInit, OnDestroy {
         });
     }
   }
-
-  
 
   // Trigger CNPJ lookup on blur or explicit user action. This complements the valueChanges auto-lookup
   // and ensures pasted values or quick inputs still trigger a lookup.
